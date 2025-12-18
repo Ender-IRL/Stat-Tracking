@@ -50,6 +50,18 @@
       color:var(--muted);
       white-space:nowrap;
     }
+    .pillStack{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:flex-end;
+    }
+    .pillStat{
+      color:var(--text);
+      font-weight:700;
+      border-color:rgba(255,255,255,.2);
+      background:rgba(255,255,255,.08);
+    }
 
     .card{
       background:rgba(17,24,39,.82);
@@ -124,22 +136,37 @@
       margin-top:10px;
     }
 
-    .scoreRow{
+    .scoreInline{
       display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
+      gap:12px;
+      margin-top:14px;
       flex-wrap:wrap;
     }
-    .scoreBox{
+    .scoreChip{
       flex:1 1 240px;
-      padding:12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 16px;
+      border-radius:18px;
+      font-weight:800;
+      font-size:15px;
+      border:2px solid;
+      letter-spacing:.3px;
+      background:rgba(255,255,255,.08);
+      color:#ffffff;
+      pointer-events:none;
+      user-select:none;
     }
-    .scoreName{ color:var(--muted); font-size:13px; }
-    .scoreNum{ font-size:34px; font-weight:900; margin-top:2px; }
+    .scoreChip span{ font-size:16px; }
+    .scoreChipA{
+      background:var(--knights);
+      border-color:var(--gold);
+    }
+    .scoreChipB{
+      background:var(--opp);
+      border-color:var(--black);
+    }
 
     .possLabel{
       margin-top:10px;
@@ -195,7 +222,10 @@
           <div class="title">Basketball Possession Tracker</div>
           <div class="subtitle">Tap the way each possession ends.</div>
         </div>
-        <div class="pill" id="halfPill">1st Half</div>
+        <div class="pillStack">
+          <div class="pill" id="halfPill">1st Half</div>
+          <div class="pill pillStat" id="validationPill">Percent Validated: 0% (0/0)</div>
+        </div>
       </div>
     </div>
 
@@ -230,17 +260,6 @@
 
     <!-- Main tracker -->
     <div class="card hidden" id="mainCard">
-      <div class="scoreRow">
-        <div class="scoreBox">
-          <div class="scoreName" id="nameA">Knights</div>
-          <div class="scoreNum" id="scoreA">0</div>
-        </div>
-        <div class="scoreBox">
-          <div class="scoreName" id="nameB">Opponent</div>
-          <div class="scoreNum" id="scoreB">0</div>
-        </div>
-      </div>
-
       <div class="possLabel">
         <div class="possTeam" id="possText">Possession: Knights</div>
         <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; min-width:240px;">
@@ -249,10 +268,23 @@
         </div>
       </div>
 
+      <div class="scoreInline">
+        <div class="scoreChip scoreChipA">
+          <span id="nameA">Knights</span>
+          <span id="scoreA">0</span>
+        </div>
+        <div class="scoreChip scoreChipB">
+          <span id="scoreB">0</span>
+          <span id="nameB">Opponent</span>
+        </div>
+      </div>
+
       <!-- Action buttons (styled by current possession theme) -->
       <div id="actionArea" class="gridActions">
         <button class="btn actionBtn" data-action="MADE_3">MADE 3</button>
         <button class="btn actionBtn" data-action="MADE_2">MADE 2</button>
+        <button class="btn actionBtn" data-action="MISSED_3">MISSED 3</button>
+        <button class="btn actionBtn" data-action="MISSED_2">MISSED 2</button>
         <button class="btn actionBtn" data-action="FOUL">FOUL DRAWN</button>
         <button class="btn actionBtn" data-action="TURNOVER">TURNOVER</button>
         <button class="btn actionBtn" data-action="TIMEOUT" style="grid-column:1 / -1;">TIMEOUT</button>
@@ -305,6 +337,9 @@
         A: { made2: 0, made3: 0, fouls: 0, turnovers: 0, timeoutsHalf: 0, timeoutsFull: 0, ftMade: 0 },
         B: { made2: 0, made3: 0, fouls: 0, turnovers: 0, timeoutsHalf: 0, timeoutsFull: 0, ftMade: 0 },
       },
+      validatedPossessions: 0,
+      totalPossessions: 0,
+      awaitingValidation: false,
       log: []
     };
 
@@ -333,6 +368,9 @@
       state.score = restored.score;
       state.possession = restored.possession;
       state.halfStats = restored.halfStats;
+      state.validatedPossessions = restored.validatedPossessions;
+      state.totalPossessions = restored.totalPossessions;
+      state.awaitingValidation = restored.awaitingValidation;
       state.log = restored.log;
 
       // hide any submenus
@@ -355,6 +393,11 @@
 
       const possName = state.possession === "A" ? state.teams.A : state.teams.B;
       $("possText").textContent = `Possession: ${possName}`;
+      const percentValidated = state.totalPossessions
+        ? Math.round((state.validatedPossessions / state.totalPossessions) * 100)
+        : 0;
+      $("validationPill").textContent =
+        `Percent Validated: ${percentValidated}% (${state.validatedPossessions}/${state.totalPossessions})`;
 
       // Theme the action buttons by current possession
       const mainCard = $("mainCard");
@@ -382,6 +425,24 @@
 
     function switchPossession() {
       state.possession = (state.possession === "A") ? "B" : "A";
+    }
+
+    function finishPossession(pointsScored) {
+      const team = currentKey();
+
+      if (team === "A") {
+        state.totalPossessions += 1;
+        state.awaitingValidation = pointsScored > 0;
+      } else {
+        if (state.awaitingValidation) {
+          if (pointsScored === 0) {
+            state.validatedPossessions += 1;
+          }
+          state.awaitingValidation = false;
+        }
+      }
+
+      switchPossession();
     }
 
     function currentKey() {
@@ -423,7 +484,7 @@
         state.halfStats[t].made3 += 1;
         scorePoints(t, 3);
         addLog(`${name}: MADE 3 (+3) → switch`);
-        switchPossession();
+        finishPossession(3);
       }
 
       if (action === "MADE_2") {
@@ -431,14 +492,21 @@
         state.halfStats[t].made2 += 1;
         scorePoints(t, 2);
         addLog(`${name}: MADE 2 (+2) → switch`);
-        switchPossession();
+        finishPossession(2);
+      }
+
+      if (action === "MISSED_3" || action === "MISSED_2") {
+        snapshotPush();
+        const label = action === "MISSED_3" ? "3" : "2";
+        addLog(`${name}: MISSED ${label} → switch`);
+        finishPossession(0);
       }
 
       if (action === "TURNOVER") {
         snapshotPush();
         state.halfStats[t].turnovers += 1;
         addLog(`${name}: TURNOVER → switch`);
-        switchPossession();
+        finishPossession(0);
       }
 
       if (action === "FOUL") {
@@ -461,23 +529,26 @@
     function handleFoulOutcome(outcome) {
       const t = currentKey();
       const name = (t === "A") ? state.teams.A : state.teams.B;
+      let points = 0;
 
       if (outcome === "MISS_ALL") {
         addLog(`${name}: FT MISS ALL (+0) → switch`);
-      }
-      if (outcome === "MADE_1") {
+      } else if (outcome === "MADE_1") {
+        points = 1;
         state.halfStats[t].ftMade += 1;
-        scorePoints(t, 1);
         addLog(`${name}: FT MADE 1 (+1) → switch`);
-      }
-      if (outcome === "MADE_2") {
+      } else if (outcome === "MADE_2") {
+        points = 2;
         state.halfStats[t].ftMade += 2;
-        scorePoints(t, 2);
         addLog(`${name}: FT MADE 2 (+2) → switch`);
       }
 
+      if (points > 0) {
+        scorePoints(t, points);
+      }
+
       showFoulMenu(false);
-      switchPossession();
+      finishPossession(points);
       render();
     }
 
@@ -510,6 +581,7 @@
 
       state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.awaitingValidation = false;
       showFoulMenu(false);
       showTimeoutMenu(false);
       render();
@@ -523,6 +595,9 @@
       state.possession = "A";
       state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.validatedPossessions = 0;
+      state.totalPossessions = 0;
+      state.awaitingValidation = false;
       state.log = [];
       showFoulMenu(false);
       showTimeoutMenu(false);
@@ -543,6 +618,9 @@
       // clear history/log fresh
       history.length = 0;
       state.log = [];
+      state.totalPossessions = 0;
+      state.validatedPossessions = 0;
+      state.awaitingValidation = false;
 
       $("setupCard").classList.add("hidden");
       $("mainCard").classList.remove("hidden");
