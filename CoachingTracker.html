@@ -41,9 +41,56 @@
     .titleRow{
       display:flex;
       align-items:center;
-      justify-content:flex-end;
+      justify-content:space-between;
       gap:10px;
       min-height:32px;
+      flex-wrap:wrap;
+    }
+    .topScore{
+      display:flex;
+      align-items:flex-end;
+      gap:6px;
+      font-weight:900;
+      font-size:22px;
+      letter-spacing:.08em;
+    }
+    .topScore span{ line-height:1; }
+    .scoreHome{ color:#60a5fa; }
+    .scoreAway{ color:#f87171; }
+    .scoreDash{ color:var(--muted); font-size:18px; font-weight:600; }
+    .timeoutTrack{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:nowrap;
+    }
+    .timeoutGroup{
+      display:flex;
+      gap:4px;
+    }
+    .timeoutCircle{
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.08em;
+      background:#ffffff;
+      color:#0b0f1a;
+    }
+    .timeoutCircle.timeoutUsed{
+      background:#050712;
+      color:#ffffff;
+      border-color:rgba(255,255,255,.6);
+    }
+    .timeoutDivider{
+      width:1px;
+      height:20px;
+      background:rgba(255,255,255,.35);
     }
 
     .pill{
@@ -171,48 +218,6 @@
       gap:10px;
     }
 
-    .scoreInline{
-      display:flex;
-      gap:12px;
-      margin-top:14px;
-      flex-wrap:wrap;
-    }
-    .scoreChip{
-      flex:1 1 240px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:10px 16px;
-      border-radius:18px;
-      font-weight:800;
-      font-size:15px;
-      border:2px solid;
-      letter-spacing:.3px;
-      background:rgba(255,255,255,.08);
-      color:#ffffff;
-      pointer-events:none;
-      user-select:none;
-    }
-    .scoreChip span{ font-size:16px; }
-    .scoreChipA{
-      background:var(--knights);
-      border-color:var(--gold);
-    }
-    .scoreChipB{
-      background:var(--opp);
-      border-color:var(--black);
-    }
-
-    .possLabel{
-      margin-top:10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .possTeam{ font-weight:900; font-size:16px; }
-
     .hint{ color:var(--muted); font-size:13px; margin-top:8px; }
 
     .log{
@@ -275,6 +280,23 @@
   <div class="app">
     <div class="topbar">
       <div class="titleRow">
+        <div class="topScore">
+          <span class="scoreHome" id="scoreDisplayA">0</span>
+          <span class="scoreDash">-</span>
+          <span class="scoreAway" id="scoreDisplayB">0</span>
+        </div>
+        <div class="timeoutTrack" id="timeoutTrack">
+          <div class="timeoutGroup">
+            <span class="timeoutCircle" data-timeout-type="full" data-index="0">F</span>
+            <span class="timeoutCircle" data-timeout-type="full" data-index="1">F</span>
+            <span class="timeoutCircle" data-timeout-type="full" data-index="2">F</span>
+          </div>
+          <div class="timeoutDivider"></div>
+          <div class="timeoutGroup">
+            <span class="timeoutCircle" data-timeout-type="half" data-index="0">30</span>
+            <span class="timeoutCircle" data-timeout-type="half" data-index="1">30</span>
+          </div>
+        </div>
         <div class="pill" id="halfPill">1st Half</div>
       </div>
       <div class="validationStats">
@@ -324,23 +346,9 @@
 
     <!-- Main tracker -->
     <div class="card hidden" id="mainCard">
-      <div class="possLabel">
-        <div class="possTeam" id="possText">Possession: Knights</div>
-        <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; min-width:240px;">
-          <button class="btn btnSecondary btnSmall" id="undoBtn" title="Undo last action">UNDO</button>
-          <button class="btn btnSecondary btnSmall" id="endHalfBtn">End Half</button>
-        </div>
-      </div>
-
-      <div class="scoreInline">
-        <div class="scoreChip scoreChipA">
-          <span id="nameA">Knights</span>
-          <span id="scoreA">0</span>
-        </div>
-        <div class="scoreChip scoreChipB">
-          <span id="scoreB">0</span>
-          <span id="nameB">Opponent</span>
-        </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn btnSecondary btnSmall" id="undoBtn" title="Undo last action">UNDO</button>
+        <button class="btn btnSecondary btnSmall" id="endHalfBtn">End Half</button>
       </div>
 
       <!-- Action buttons (styled by current possession theme) -->
@@ -419,6 +427,7 @@
       awaitingValidationIndex: null,
       halfValidation: { total: 0, validated: 0 },
       homePossHistory: [],
+      timeoutsUsed: { full: 0, half: 0 },
       log: []
     };
 
@@ -426,6 +435,8 @@
     const history = []; // each entry: JSON string snapshot
 
     const $ = (id) => document.getElementById(id);
+    const timeoutFullEls = Array.from(document.querySelectorAll('[data-timeout-type="full"]'));
+    const timeoutHalfEls = Array.from(document.querySelectorAll('[data-timeout-type="half"]'));
 
     function snapshotPush() {
       // store a deep snapshot before we mutate
@@ -453,6 +464,7 @@
       state.awaitingValidationIndex = restored.awaitingValidationIndex;
       state.halfValidation = restored.halfValidation;
       state.homePossHistory = restored.homePossHistory;
+      state.timeoutsUsed = restored.timeoutsUsed;
       state.log = restored.log;
 
       // hide any submenus
@@ -468,13 +480,9 @@
     function render() {
       $("halfPill").textContent = state.half === 1 ? "1st Half" : "2nd Half";
 
-      $("nameA").textContent = state.teams.A || "YOUR TEAM";
-      $("nameB").textContent = state.teams.B || "OPPONENT";
-      $("scoreA").textContent = state.score.A;
-      $("scoreB").textContent = state.score.B;
+      $("scoreDisplayA").textContent = state.score.A;
+      $("scoreDisplayB").textContent = state.score.B;
 
-      const possName = state.possession === "A" ? state.teams.A : state.teams.B;
-      $("possText").textContent = `Possession: ${possName}`;
       const percentAll = calcPercent(state.validatedPossessions, state.totalPossessions);
       const percentHalf = calcPercent(state.halfValidation.validated, state.halfValidation.total);
       const lastSlice = state.homePossHistory.slice(-10);
@@ -484,6 +492,7 @@
       updateValidationCircle("validationAll", percentAll);
       updateValidationCircle("validationHalf", percentHalf);
       updateValidationCircle("validationTen", percentLastTen);
+      renderTimeoutTrack();
 
       // Theme the action buttons by current possession
       const mainCard = $("mainCard");
@@ -594,6 +603,15 @@
       el.style.background = percentToColor(percent);
     }
 
+    function renderTimeoutTrack() {
+      timeoutFullEls.forEach((el, idx) => {
+        el.classList.toggle("timeoutUsed", idx < state.timeoutsUsed.full);
+      });
+      timeoutHalfEls.forEach((el, idx) => {
+        el.classList.toggle("timeoutUsed", idx < state.timeoutsUsed.half);
+      });
+    }
+
     // --- Menus ---
     function showFoulMenu(on) {
       $("foulArea").classList.toggle("hidden", !on);
@@ -699,10 +717,16 @@
 
       if (kind === "HALF") {
         state.halfStats[t].timeoutsHalf += 1;
+        if (t === "A") {
+          state.timeoutsUsed.half = Math.min(2, state.timeoutsUsed.half + 1);
+        }
         addLog(`${name}: TIMEOUT — 30s (Half) → same possession`);
       }
       if (kind === "FULL") {
         state.halfStats[t].timeoutsFull += 1;
+        if (t === "A") {
+          state.timeoutsUsed.full = Math.min(3, state.timeoutsUsed.full + 1);
+        }
         addLog(`${name}: TIMEOUT — Full → same possession`);
       }
 
@@ -744,6 +768,7 @@
       state.awaitingValidationIndex = null;
       state.halfValidation = { total:0, validated:0 };
       state.homePossHistory = [];
+      state.timeoutsUsed = { full:0, half:0 };
       state.log = [];
       showFoulMenu(false);
       showTimeoutMenu(false);
@@ -770,12 +795,12 @@
       state.awaitingValidationIndex = null;
       state.halfValidation = { total:0, validated:0 };
       state.homePossHistory = [];
+      state.timeoutsUsed = { full:0, half:0 };
 
       $("setupCard").classList.add("hidden");
       $("mainCard").classList.remove("hidden");
 
-      const possName = state.possession === "A" ? state.teams.A : state.teams.B;
-      addLog(`Game started: <b>${state.teams.A}</b> vs <b>${state.teams.B}</b>. Possession: ${possName}`);
+      addLog(`Game started: <b>${state.teams.A}</b> vs <b>${state.teams.B}</b>.`);
       render();
     });
 
