@@ -38,9 +38,13 @@
       z-index:10;
     }
 
-    .titleRow{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
-    .title{ font-weight:800; letter-spacing:.2px; font-size:18px; line-height:1.1; }
-    .subtitle{ color:var(--muted); font-size:13px; margin-top:4px; }
+    .titleRow{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      min-height:32px;
+    }
 
     .pill{
       border:1px solid rgba(255,255,255,.12);
@@ -159,6 +163,13 @@
       gap:10px;
       margin-top:10px;
     }
+    .actionBtn{
+      padding:18px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
 
     .scoreInline{
       display:flex;
@@ -236,16 +247,34 @@
       user-select:none;
     }
     .radioPill input{ width:auto; margin:0; }
+
+    .shotBtn .shotTag{
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      letter-spacing:.14em;
+      font-weight:800;
+      color:#ffffff;
+      border:1px solid rgba(255,255,255,.28);
+    }
+    .shotBtn .shotValue{
+      font-size:16px;
+      font-weight:900;
+    }
+    .shotBtn .shotTag-made{
+      background:#16a34a;
+      border-color:#15803d;
+    }
+    .shotBtn .shotTag-missed{
+      background:#dc2626;
+      border-color:#991b1b;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="topbar">
       <div class="titleRow">
-        <div>
-          <div class="title">Basketball Possession Tracker</div>
-          <div class="subtitle">Tap the way each possession ends.</div>
-        </div>
         <div class="pill" id="halfPill">1st Half</div>
       </div>
       <div class="validationStats">
@@ -316,10 +345,22 @@
 
       <!-- Action buttons (styled by current possession theme) -->
       <div id="actionArea" class="gridActions">
-        <button class="btn actionBtn" data-action="MADE_3">MADE 3</button>
-        <button class="btn actionBtn" data-action="MADE_2">MADE 2</button>
-        <button class="btn actionBtn" data-action="MISSED_3">MISSED 3</button>
-        <button class="btn actionBtn" data-action="MISSED_2">MISSED 2</button>
+        <button class="btn actionBtn shotBtn" data-action="MADE_3">
+          <span class="shotTag shotTag-made">MADE</span>
+          <span class="shotValue">3</span>
+        </button>
+        <button class="btn actionBtn shotBtn" data-action="MADE_2">
+          <span class="shotTag shotTag-made">MADE</span>
+          <span class="shotValue">2</span>
+        </button>
+        <button class="btn actionBtn shotBtn" data-action="MISSED_3">
+          <span class="shotTag shotTag-missed">MISSED</span>
+          <span class="shotValue">3</span>
+        </button>
+        <button class="btn actionBtn shotBtn" data-action="MISSED_2">
+          <span class="shotTag shotTag-missed">MISSED</span>
+          <span class="shotValue">2</span>
+        </button>
         <button class="btn actionBtn" data-action="FOUL">FOUL DRAWN</button>
         <button class="btn actionBtn" data-action="TURNOVER">TURNOVER</button>
         <button class="btn actionBtn" data-action="TIMEOUT" style="grid-column:1 / -1;">TIMEOUT</button>
