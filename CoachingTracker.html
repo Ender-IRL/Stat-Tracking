@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Basketball Possession Tracker</title>
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --card:#111827;
+      --text:#f8fafc;
+      --muted:#cbd5e1;
+
+      --knights:#0b2a5b;     /* navy */
+      --gold:#d4af37;        /* gold outline */
+      --opp:#6b0f1a;         /* maroon */
+      --black:#0b0b0b;       /* black outline */
+
+      --radius:16px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:-apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:linear-gradient(180deg,#050712, var(--bg));
+      color:var(--text);
+      padding: env(safe-area-inset-top) 14px calc(14px + env(safe-area-inset-bottom));
+    }
+
+    .app{ max-width:720px; margin:0 auto; }
+
+    .topbar{
+      position:sticky; top:0;
+      padding:12px 0 10px;
+      background:linear-gradient(180deg, rgba(5,7,18,.92), rgba(5,7,18,.55));
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+
+    .titleRow{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+    .title{ font-weight:800; letter-spacing:.2px; font-size:18px; line-height:1.1; }
+    .subtitle{ color:var(--muted); font-size:13px; margin-top:4px; }
+
+    .pill{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:13px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .card{
+      background:rgba(17,24,39,.82);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:var(--radius);
+      padding:14px;
+      margin:12px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    label{ display:block; color:var(--muted); font-size:13px; margin:10px 0 6px; }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      font-size:16px;
+      outline:none;
+    }
+
+    .row{ display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width:520px){ .row{ grid-template-columns:1fr 1fr; } }
+
+    .btn{
+      width:100%;
+      padding:14px 14px;
+      border-radius:18px;
+      font-weight:800;
+      letter-spacing:.3px;
+      font-size:16px;
+      border:2px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); filter:brightness(1.06); }
+
+    .btnSecondary{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.18);
+      color:var(--text);
+      font-weight:800;
+    }
+
+    .btnSmall{
+      padding:10px 12px;
+      font-size:14px;
+      border-radius:14px;
+      font-weight:900;
+    }
+
+    /* Team-themed action buttons */
+    .theme-knights .actionBtn{
+      background: var(--knights);
+      border-color: var(--gold);
+      color: #ffffff;
+    }
+    .theme-opp .actionBtn{
+      background: var(--opp);
+      border-color: var(--black);
+      color: #ffffff;
+    }
+
+    .gridActions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .scoreRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .scoreBox{
+      flex:1 1 240px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+    }
+    .scoreName{ color:var(--muted); font-size:13px; }
+    .scoreNum{ font-size:34px; font-weight:900; margin-top:2px; }
+
+    .possLabel{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .possTeam{ font-weight:900; font-size:16px; }
+
+    .hint{ color:var(--muted); font-size:13px; margin-top:8px; }
+
+    .log{
+      max-height:180px;
+      overflow:auto;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      font-size:13px;
+      color:var(--muted);
+    }
+    .log b{ color:var(--text); }
+    .hidden{ display:none !important; }
+
+    .radioRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .radioPill{
+      flex:1 1 160px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      border-radius:999px;
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .radioPill input{ width:auto; margin:0; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="titleRow">
+        <div>
+          <div class="title">Basketball Possession Tracker</div>
+          <div class="subtitle">Tap the way each possession ends.</div>
+        </div>
+        <div class="pill" id="halfPill">1st Half</div>
+      </div>
+    </div>
+
+    <!-- Setup screen -->
+    <div class="card" id="setupCard">
+      <div class="row">
+        <div>
+          <label for="yourTeam">YOUR TEAM</label>
+          <input id="yourTeam" value="Knights" />
+        </div>
+        <div>
+          <label for="oppTeam">OPPONENT</label>
+          <input id="oppTeam" placeholder="Opponent name" />
+        </div>
+      </div>
+
+      <label>Who starts with the ball?</label>
+      <div class="radioRow" id="startPossRow">
+        <label class="radioPill">
+          <input type="radio" name="startPoss" value="A" checked />
+          Your Team starts
+        </label>
+        <label class="radioPill">
+          <input type="radio" name="startPoss" value="B" />
+          Opponent starts
+        </label>
+      </div>
+
+      <button class="btn" id="enterBtn" style="margin-top:12px;">ENTER</button>
+      <div class="hint">You can open this file directly in Edge/Safari on iPhone.</div>
+    </div>
+
+    <!-- Main tracker -->
+    <div class="card hidden" id="mainCard">
+      <div class="scoreRow">
+        <div class="scoreBox">
+          <div class="scoreName" id="nameA">Knights</div>
+          <div class="scoreNum" id="scoreA">0</div>
+        </div>
+        <div class="scoreBox">
+          <div class="scoreName" id="nameB">Opponent</div>
+          <div class="scoreNum" id="scoreB">0</div>
+        </div>
+      </div>
+
+      <div class="possLabel">
+        <div class="possTeam" id="possText">Possession: Knights</div>
+        <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; min-width:240px;">
+          <button class="btn btnSecondary btnSmall" id="undoBtn" title="Undo last action">UNDO</button>
+          <button class="btn btnSecondary btnSmall" id="endHalfBtn">End Half</button>
+        </div>
+      </div>
+
+      <!-- Action buttons (styled by current possession theme) -->
+      <div id="actionArea" class="gridActions">
+        <button class="btn actionBtn" data-action="MADE_3">MADE 3</button>
+        <button class="btn actionBtn" data-action="MADE_2">MADE 2</button>
+        <button class="btn actionBtn" data-action="FOUL">FOUL DRAWN</button>
+        <button class="btn actionBtn" data-action="TURNOVER">TURNOVER</button>
+        <button class="btn actionBtn" data-action="TIMEOUT" style="grid-column:1 / -1;">TIMEOUT</button>
+      </div>
+
+      <!-- Foul sub-menu -->
+      <div id="foulArea" class="hidden" style="margin-top:10px;">
+        <div class="hint" style="margin-top:0;">Foul drawn outcome:</div>
+        <div class="gridActions">
+          <button class="btn actionBtn" data-foul="MISS_ALL">MISS ALL</button>
+          <button class="btn actionBtn" data-foul="MADE_1">MADE 1</button>
+          <button class="btn actionBtn" data-foul="MADE_2">MADE 2</button>
+          <button class="btn btnSecondary" id="cancelFoulBtn" style="grid-column:1 / -1;">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Timeout sub-menu -->
+      <div id="timeoutArea" class="hidden" style="margin-top:10px;">
+        <div class="hint" style="margin-top:0;">Timeout type (does NOT end possession):</div>
+        <div class="gridActions">
+          <button class="btn actionBtn" data-timeout="HALF">30s (Half)</button>
+          <button class="btn actionBtn" data-timeout="FULL">Full</button>
+          <button class="btn btnSecondary" id="cancelTimeoutBtn" style="grid-column:1 / -1;">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Stats + Log -->
+      <div class="row" style="margin-top:12px;">
+        <div class="card" style="margin:0;">
+          <div style="font-weight:900; margin-bottom:6px;">Stats (this half)</div>
+          <div class="hint" id="statsLine"></div>
+          <button class="btn btnSecondary btnSmall" id="resetBtn" style="margin-top:10px;">Reset Game</button>
+        </div>
+        <div class="card" style="margin:0;">
+          <div style="font-weight:900; margin-bottom:6px;">Log</div>
+          <div class="log" id="logBox"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- State ---
+    const state = {
+      half: 1,
+      teams: { A: "Knights", B: "Opponent" },
+      score: { A: 0, B: 0 },
+      possession: "A", // "A" = your team, "B" = opponent
+      halfStats: {
+        A: { made2: 0, made3: 0, fouls: 0, turnovers: 0, timeoutsHalf: 0, timeoutsFull: 0, ftMade: 0 },
+        B: { made2: 0, made3: 0, fouls: 0, turnovers: 0, timeoutsHalf: 0, timeoutsFull: 0, ftMade: 0 },
+      },
+      log: []
+    };
+
+    // History stack for UNDO (full snapshots)
+    const history = []; // each entry: JSON string snapshot
+
+    const $ = (id) => document.getElementById(id);
+
+    function snapshotPush() {
+      // store a deep snapshot before we mutate
+      history.push(JSON.stringify(state));
+      // keep it from growing forever
+      if (history.length > 200) history.shift();
+      $("undoBtn").disabled = history.length === 0;
+      $("undoBtn").style.opacity = history.length === 0 ? 0.6 : 1;
+    }
+
+    function undo() {
+      if (!history.length) return;
+      const prev = history.pop();
+      const restored = JSON.parse(prev);
+
+      // copy restored -> state (keep object references stable)
+      state.half = restored.half;
+      state.teams = restored.teams;
+      state.score = restored.score;
+      state.possession = restored.possession;
+      state.halfStats = restored.halfStats;
+      state.log = restored.log;
+
+      // hide any submenus
+      showFoulMenu(false);
+      showTimeoutMenu(false);
+
+      $("undoBtn").disabled = history.length === 0;
+      $("undoBtn").style.opacity = history.length === 0 ? 0.6 : 1;
+
+      render();
+    }
+
+    function render() {
+      $("halfPill").textContent = state.half === 1 ? "1st Half" : "2nd Half";
+
+      $("nameA").textContent = state.teams.A || "YOUR TEAM";
+      $("nameB").textContent = state.teams.B || "OPPONENT";
+      $("scoreA").textContent = state.score.A;
+      $("scoreB").textContent = state.score.B;
+
+      const possName = state.possession === "A" ? state.teams.A : state.teams.B;
+      $("possText").textContent = `Possession: ${possName}`;
+
+      // Theme the action buttons by current possession
+      const mainCard = $("mainCard");
+      mainCard.classList.toggle("theme-knights", state.possession === "A");
+      mainCard.classList.toggle("theme-opp", state.possession === "B");
+
+      // Stats line
+      const sA = state.halfStats.A, sB = state.halfStats.B;
+      $("statsLine").innerHTML =
+        `<b>${state.teams.A}:</b> 2s ${sA.made2}, 3s ${sA.made3}, Fouls ${sA.fouls}, TO ${sA.turnovers}, TO(30s) ${sA.timeoutsHalf}, TO(Full) ${sA.timeoutsFull}<br>` +
+        `<b>${state.teams.B}:</b> 2s ${sB.made2}, 3s ${sB.made3}, Fouls ${sB.fouls}, TO ${sB.turnovers}, TO(30s) ${sB.timeoutsHalf}, TO(Full) ${sB.timeoutsFull}`;
+
+      // Log
+      $("logBox").innerHTML = state.log.slice(-50).join("<br>");
+      $("logBox").scrollTop = $("logBox").scrollHeight;
+
+      $("undoBtn").disabled = history.length === 0;
+      $("undoBtn").style.opacity = history.length === 0 ? 0.6 : 1;
+    }
+
+    function addLog(text) {
+      const halfLabel = state.half === 1 ? "1H" : "2H";
+      state.log.push(`<b>${halfLabel}</b> — ${text}`);
+    }
+
+    function switchPossession() {
+      state.possession = (state.possession === "A") ? "B" : "A";
+    }
+
+    function currentKey() {
+      return state.possession; // "A" or "B"
+    }
+
+    function scorePoints(teamKey, pts) {
+      state.score[teamKey] += pts;
+    }
+
+    // --- Menus ---
+    function showFoulMenu(on) {
+      $("foulArea").classList.toggle("hidden", !on);
+      if (on) {
+        $("actionArea").classList.add("hidden");
+        $("timeoutArea").classList.add("hidden");
+      } else {
+        $("actionArea").classList.remove("hidden");
+      }
+    }
+
+    function showTimeoutMenu(on) {
+      $("timeoutArea").classList.toggle("hidden", !on);
+      if (on) {
+        $("actionArea").classList.add("hidden");
+        $("foulArea").classList.add("hidden");
+      } else {
+        $("actionArea").classList.remove("hidden");
+      }
+    }
+
+    // --- Actions ---
+    function handleAction(action) {
+      const t = currentKey();
+      const name = (t === "A") ? state.teams.A : state.teams.B;
+
+      if (action === "MADE_3") {
+        snapshotPush();
+        state.halfStats[t].made3 += 1;
+        scorePoints(t, 3);
+        addLog(`${name}: MADE 3 (+3) → switch`);
+        switchPossession();
+      }
+
+      if (action === "MADE_2") {
+        snapshotPush();
+        state.halfStats[t].made2 += 1;
+        scorePoints(t, 2);
+        addLog(`${name}: MADE 2 (+2) → switch`);
+        switchPossession();
+      }
+
+      if (action === "TURNOVER") {
+        snapshotPush();
+        state.halfStats[t].turnovers += 1;
+        addLog(`${name}: TURNOVER → switch`);
+        switchPossession();
+      }
+
+      if (action === "FOUL") {
+        snapshotPush(); // counts the foul tap as an action
+        state.halfStats[t].fouls += 1;
+        addLog(`${name}: FOUL DRAWN…`);
+        showFoulMenu(true);
+      }
+
+      if (action === "TIMEOUT") {
+        // timeout does NOT switch possession; open submenu like foul
+        snapshotPush();
+        addLog(`${name}: TIMEOUT…`);
+        showTimeoutMenu(true);
+      }
+
+      render();
+    }
+
+    function handleFoulOutcome(outcome) {
+      const t = currentKey();
+      const name = (t === "A") ? state.teams.A : state.teams.B;
+
+      if (outcome === "MISS_ALL") {
+        addLog(`${name}: FT MISS ALL (+0) → switch`);
+      }
+      if (outcome === "MADE_1") {
+        state.halfStats[t].ftMade += 1;
+        scorePoints(t, 1);
+        addLog(`${name}: FT MADE 1 (+1) → switch`);
+      }
+      if (outcome === "MADE_2") {
+        state.halfStats[t].ftMade += 2;
+        scorePoints(t, 2);
+        addLog(`${name}: FT MADE 2 (+2) → switch`);
+      }
+
+      showFoulMenu(false);
+      switchPossession();
+      render();
+    }
+
+    function handleTimeoutChoice(kind) {
+      const t = currentKey();
+      const name = (t === "A") ? state.teams.A : state.teams.B;
+
+      if (kind === "HALF") {
+        state.halfStats[t].timeoutsHalf += 1;
+        addLog(`${name}: TIMEOUT — 30s (Half) → same possession`);
+      }
+      if (kind === "FULL") {
+        state.halfStats[t].timeoutsFull += 1;
+        addLog(`${name}: TIMEOUT — Full → same possession`);
+      }
+
+      showTimeoutMenu(false);
+      render();
+    }
+
+    // --- Half / Reset ---
+    function endHalf() {
+      snapshotPush();
+      if (state.half === 1) {
+        addLog(`<b>END OF 1ST HALF</b> — stats reset for 2nd half`);
+        state.half = 2;
+      } else {
+        addLog(`<b>END OF 2ND HALF</b> — stats reset`);
+      }
+
+      state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      showFoulMenu(false);
+      showTimeoutMenu(false);
+      render();
+    }
+
+    function resetGame() {
+      snapshotPush();
+      state.half = 1;
+      state.score.A = 0;
+      state.score.B = 0;
+      state.possession = "A";
+      state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.log = [];
+      showFoulMenu(false);
+      showTimeoutMenu(false);
+      addLog("Game reset.");
+      render();
+    }
+
+    // --- Wire up UI ---
+    $("enterBtn").addEventListener("click", () => {
+      const your = $("yourTeam").value.trim() || "Knights";
+      const opp = $("oppTeam").value.trim() || "Opponent";
+      state.teams.A = your;
+      state.teams.B = opp;
+
+      const start = document.querySelector('input[name="startPoss"]:checked')?.value || "A";
+      state.possession = start;
+
+      // clear history/log fresh
+      history.length = 0;
+      state.log = [];
+
+      $("setupCard").classList.add("hidden");
+      $("mainCard").classList.remove("hidden");
+
+      const possName = state.possession === "A" ? state.teams.A : state.teams.B;
+      addLog(`Game started: <b>${state.teams.A}</b> vs <b>${state.teams.B}</b>. Possession: ${possName}`);
+      render();
+    });
+
+    $("actionArea").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const action = btn.getAttribute("data-action");
+      if (action) handleAction(action);
+    });
+
+    $("foulArea").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const outcome = btn.getAttribute("data-foul");
+      if (outcome) handleFoulOutcome(outcome);
+    });
+
+    $("timeoutArea").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const kind = btn.getAttribute("data-timeout");
+      if (kind) handleTimeoutChoice(kind);
+    });
+
+    $("cancelFoulBtn").addEventListener("click", () => { showFoulMenu(false); render(); });
+    $("cancelTimeoutBtn").addEventListener("click", () => { showTimeoutMenu(false); render(); });
+
+    $("endHalfBtn").addEventListener("click", endHalf);
+    $("resetBtn").addEventListener("click", resetGame);
+    $("undoBtn").addEventListener("click", undo);
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
