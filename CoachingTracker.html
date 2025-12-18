@@ -50,17 +50,41 @@
       color:var(--muted);
       white-space:nowrap;
     }
-    .pillStack{
+
+    .validationStats{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+      flex-wrap:wrap;
+    }
+    .validationStat{
+      flex:1 1 90px;
       display:flex;
       flex-direction:column;
-      gap:6px;
-      align-items:flex-end;
+      align-items:center;
+      gap:4px;
+      min-width:84px;
     }
-    .pillStat{
-      color:var(--text);
+    .validationLabel{
+      font-size:11px;
+      letter-spacing:.16em;
       font-weight:700;
-      border-color:rgba(255,255,255,.2);
-      background:rgba(255,255,255,.08);
+      color:var(--muted);
+    }
+    .validationCircle{
+      width:74px;
+      height:74px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:18px;
+      background:#ef4444;
+      color:#050712;
+      border:2px solid rgba(255,255,255,.25);
+      box-shadow:0 10px 26px rgba(0,0,0,.35);
+      transition:background .3s ease;
     }
 
     .card{
@@ -222,9 +246,20 @@
           <div class="title">Basketball Possession Tracker</div>
           <div class="subtitle">Tap the way each possession ends.</div>
         </div>
-        <div class="pillStack">
-          <div class="pill" id="halfPill">1st Half</div>
-          <div class="pill pillStat" id="validationPill">Percent Validated: 0% (0/0)</div>
+        <div class="pill" id="halfPill">1st Half</div>
+      </div>
+      <div class="validationStats">
+        <div class="validationStat">
+          <div class="validationLabel">ALL</div>
+          <div class="validationCircle" id="validationAll">0%</div>
+        </div>
+        <div class="validationStat">
+          <div class="validationLabel">HALF</div>
+          <div class="validationCircle" id="validationHalf">0%</div>
+        </div>
+        <div class="validationStat">
+          <div class="validationLabel">LAST 10</div>
+          <div class="validationCircle" id="validationTen">0%</div>
         </div>
       </div>
     </div>
@@ -340,6 +375,9 @@
       validatedPossessions: 0,
       totalPossessions: 0,
       awaitingValidation: false,
+      awaitingValidationIndex: null,
+      halfValidation: { total: 0, validated: 0 },
+      homePossHistory: [],
       log: []
     };
 
@@ -371,6 +409,9 @@
       state.validatedPossessions = restored.validatedPossessions;
       state.totalPossessions = restored.totalPossessions;
       state.awaitingValidation = restored.awaitingValidation;
+      state.awaitingValidationIndex = restored.awaitingValidationIndex;
+      state.halfValidation = restored.halfValidation;
+      state.homePossHistory = restored.homePossHistory;
       state.log = restored.log;
 
       // hide any submenus
@@ -393,11 +434,15 @@
 
       const possName = state.possession === "A" ? state.teams.A : state.teams.B;
       $("possText").textContent = `Possession: ${possName}`;
-      const percentValidated = state.totalPossessions
-        ? Math.round((state.validatedPossessions / state.totalPossessions) * 100)
-        : 0;
-      $("validationPill").textContent =
-        `Percent Validated: ${percentValidated}% (${state.validatedPossessions}/${state.totalPossessions})`;
+      const percentAll = calcPercent(state.validatedPossessions, state.totalPossessions);
+      const percentHalf = calcPercent(state.halfValidation.validated, state.halfValidation.total);
+      const lastSlice = state.homePossHistory.slice(-10);
+      const lastTotal = lastSlice.length;
+      const lastValidated = lastSlice.reduce((sum, val) => sum + (val ? 1 : 0), 0);
+      const percentLastTen = calcPercent(lastValidated, lastTotal);
+      updateValidationCircle("validationAll", percentAll);
+      updateValidationCircle("validationHalf", percentHalf);
+      updateValidationCircle("validationTen", percentLastTen);
 
       // Theme the action buttons by current possession
       const mainCard = $("mainCard");
@@ -432,13 +477,27 @@
 
       if (team === "A") {
         state.totalPossessions += 1;
-        state.awaitingValidation = pointsScored > 0;
+        state.halfValidation.total += 1;
+        state.homePossHistory.push(0);
+        if (pointsScored > 0) {
+          state.awaitingValidation = true;
+          state.awaitingValidationIndex = state.homePossHistory.length - 1;
+        } else {
+          state.awaitingValidation = false;
+          state.awaitingValidationIndex = null;
+        }
       } else {
-        if (state.awaitingValidation) {
+        if (state.awaitingValidation && state.awaitingValidationIndex !== null) {
           if (pointsScored === 0) {
             state.validatedPossessions += 1;
+            state.halfValidation.validated += 1;
+            const idx = state.awaitingValidationIndex;
+            if (idx >= 0 && idx < state.homePossHistory.length) {
+              state.homePossHistory[idx] = 1;
+            }
           }
           state.awaitingValidation = false;
+          state.awaitingValidationIndex = null;
         }
       }
 
@@ -451,6 +510,47 @@
 
     function scorePoints(teamKey, pts) {
       state.score[teamKey] += pts;
+    }
+
+    function calcPercent(part, total) {
+      if (!total) return 0;
+      return Math.round((part / total) * 100);
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      const num = parseInt(clean, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255,
+      };
+    }
+
+    function mixColor(hexA, hexB, factor) {
+      const a = hexToRgb(hexA);
+      const b = hexToRgb(hexB);
+      const blend = (c1, c2) => Math.round(c1 + (c2 - c1) * factor);
+      return `rgb(${blend(a.r, b.r)}, ${blend(a.g, b.g)}, ${blend(a.b, b.b)})`;
+    }
+
+    function percentToColor(percent) {
+      const p = Math.max(0, Math.min(100, percent || 0));
+      if (p <= 20) return "#ef4444";
+      if (p >= 80) return "#22c55e";
+      if (p <= 50) {
+        const ratio = (p - 20) / 30;
+        return mixColor("#ef4444", "#eab308", ratio);
+      }
+      const ratio = (p - 50) / 30;
+      return mixColor("#eab308", "#22c55e", ratio);
+    }
+
+    function updateValidationCircle(id, percent) {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = `${percent}%`;
+      el.style.background = percentToColor(percent);
     }
 
     // --- Menus ---
@@ -582,6 +682,8 @@
       state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.awaitingValidation = false;
+      state.awaitingValidationIndex = null;
+      state.halfValidation = { total:0, validated:0 };
       showFoulMenu(false);
       showTimeoutMenu(false);
       render();
@@ -598,6 +700,9 @@
       state.validatedPossessions = 0;
       state.totalPossessions = 0;
       state.awaitingValidation = false;
+      state.awaitingValidationIndex = null;
+      state.halfValidation = { total:0, validated:0 };
+      state.homePossHistory = [];
       state.log = [];
       showFoulMenu(false);
       showTimeoutMenu(false);
@@ -621,6 +726,9 @@
       state.totalPossessions = 0;
       state.validatedPossessions = 0;
       state.awaitingValidation = false;
+      state.awaitingValidationIndex = null;
+      state.halfValidation = { total:0, validated:0 };
+      state.homePossHistory = [];
 
       $("setupCard").classList.add("hidden");
       $("mainCard").classList.remove("hidden");
