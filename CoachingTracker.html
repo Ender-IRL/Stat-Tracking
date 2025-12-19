@@ -108,6 +108,23 @@
       margin-top:12px;
       flex-wrap:wrap;
     }
+    #statsPaneContainer{
+      transition:min-height .25s ease;
+    }
+    .validationLabels{
+      display:flex;
+      gap:10px;
+      margin-top:6px;
+      font-size:11px;
+      letter-spacing:.16em;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+    .validationLabels span{
+      flex:1;
+      text-align:center;
+    }
     .pppRow{ margin-top:6px; }
     .validationStat{
       flex:1 1 90px;
@@ -138,6 +155,168 @@
       box-shadow:0 10px 26px rgba(0,0,0,.35);
       transition:background .3s ease;
     }
+    .foulSummaryGrid{
+      display:flex;
+      gap:14px;
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(0,0,0,.25);
+    }
+    .foulColumn{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .foulColumn.teamA .foulTeamName{ color:var(--knights); }
+    .foulColumn.teamB .foulTeamName{ color:var(--opp); }
+    .foulColumn + .foulColumn{
+      border-left:1px solid rgba(255,255,255,.15);
+      padding-left:14px;
+    }
+    .foulTeamName{
+      font-weight:800;
+      letter-spacing:.1em;
+      font-size:12px;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .foulRow{
+      display:flex;
+      gap:8px;
+      font-weight:700;
+      font-size:14px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .foulRowCount{
+      color:var(--muted);
+      min-width:26px;
+    }
+    .foulRowPlayers{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .foulChip{
+      padding:4px 8px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.2);
+      background:rgba(255,255,255,.08);
+      font-size:13px;
+      font-weight:700;
+    }
+    .foulSummaryEmpty{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .foulList{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .foulPlayerCard{
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(0,0,0,.25);
+    }
+    .foulInputRow{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    .foulPlayerInput{
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(0,0,0,.35);
+      color:var(--text);
+      padding:10px 12px;
+      font-size:16px;
+      outline:none;
+    }
+    .foulPlayerInput.teamA{
+      border-color:var(--gold);
+      background:rgba(11,42,91,.3);
+    }
+    .foulPlayerInput.teamB{
+      border-color:var(--black);
+      background:rgba(107,15,26,.3);
+    }
+    .foulPlayerInput.inputError{
+      box-shadow:0 0 0 2px #ef4444;
+    }
+    .foulChips.inputError .foulChipBtn{
+      box-shadow:0 0 0 2px #ef4444;
+    }
+    .foulChips{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+    .foulChips.hidden{ display:none; }
+    .foulChipBtn{
+      width:100%;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      font-size:15px;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .foulChipBtn:active{
+      transform:translateY(1px);
+    }
+    .foulRosterBtn{
+      background:var(--knights);
+      border-color:var(--gold);
+      color:#ffffff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .foulRosterBtn .rosterNumber{
+      font-weight:900;
+      font-size:18px;
+    }
+    .foulRosterBtn .rosterName{
+      font-weight:800;
+      font-size:15px;
+      flex:1;
+      text-align:right;
+    }
+    .foulConfirmBtn{
+      border-radius:12px;
+      font-weight:900;
+      font-size:16px;
+    }
+    .foulSelectedBtn{
+      margin-top:12px;
+      width:100%;
+      padding:14px;
+      border-radius:18px;
+      font-weight:900;
+      letter-spacing:.3px;
+      border:2px solid;
+    }
+    .foulSelectedBtn.teamA{
+      background:var(--knights);
+      border-color:var(--gold);
+      color:#ffffff;
+    }
+    .foulSelectedBtn.teamB{
+      background:var(--opp);
+      border-color:var(--black);
+      color:#ffffff;
+    }
+    .foulOutcomeGrid.hidden{ display:none; }
 
     .card{
       background:rgba(17,24,39,.82);
@@ -185,6 +364,9 @@
       color:var(--text);
       font-weight:800;
     }
+    .btnSelected{
+      box-shadow:0 0 0 2px rgba(255,255,255,.4);
+    }
 
     .btnSmall{
       padding:10px 12px;
@@ -217,6 +399,19 @@
       align-items:center;
       justify-content:center;
       gap:10px;
+    }
+    .controlActions{
+      margin-top:10px;
+    }
+    .controlBtn{
+      padding:18px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      letter-spacing:.3px;
+      font-size:16px;
+      border-radius:18px;
     }
 
     .hint{ color:var(--muted); font-size:13px; margin-top:8px; }
@@ -275,6 +470,223 @@
       background:#dc2626;
       border-color:#991b1b;
     }
+
+    /* Summary screen */
+    .summaryTitle{
+      font-weight:900;
+      font-size:18px;
+      letter-spacing:.02em;
+      margin-bottom:10px;
+    }
+    .summarySection{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(0,0,0,.18);
+      margin-top:10px;
+    }
+    .summarySectionTitle{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.14em;
+      color:var(--muted);
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .summaryRows{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .summaryRowLine{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      font-size:14px;
+      line-height:1.25;
+    }
+    .summaryLabelText{
+      color:var(--muted);
+      font-weight:800;
+      flex:0 0 auto;
+      max-width:52%;
+    }
+    .summaryValueText{
+      text-align:right;
+      font-weight:900;
+      flex:1 1 auto;
+    }
+    .summarySubText{
+      display:block;
+      font-weight:800;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+      text-align:right;
+      white-space:normal;
+    }
+    .summaryTeamGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .summaryActions{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    .summaryStartButtons{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (min-width:520px){
+      .summaryStartButtons{ flex-direction:row; }
+    }
+    .summarySecondHalfPrompt{
+      font-size:14px;
+      font-weight:800;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .confirmOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(5,7,18,.92);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+      padding:20px;
+    }
+    .confirmModal{
+      width:100%;
+      max-width:420px;
+      background:rgba(17,24,39,.95);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:20px;
+      padding:24px;
+      text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+    }
+    .confirmMessage{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.02em;
+      margin-bottom:18px;
+    }
+    .confirmActions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    @media (min-width:420px){
+      .confirmActions{ flex-direction:row; }
+    }
+    .confirmBtn{
+      flex:1;
+      padding:14px;
+      border-radius:16px;
+      font-weight:800;
+      font-size:16px;
+      letter-spacing:.03em;
+      border:2px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+    }
+    .confirmBtn-primary{
+      background:var(--knights);
+      border-color:var(--gold);
+      color:#ffffff;
+    }
+    .shotResultSummary{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:8px;
+    }
+    .shotResultSummaryText{
+      font-size:14px;
+      font-weight:800;
+      color:var(--muted);
+    }
+    .summaryToggleRow{
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:8px;
+    }
+    .summaryToggleBtn{
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.04em;
+      cursor:pointer;
+    }
+    .summaryToggleBtn:active{
+      transform:translateY(1px);
+    }
+    .summaryFoulGrid{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .summaryFoulColumn{
+      flex:1 1 220px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .summaryFoulTeam{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.16em;
+      margin-bottom:8px;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+    .summaryFoulRows{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .summaryFoulRow{
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      font-weight:800;
+      font-size:14px;
+    }
+    .summaryFoulCount{
+      min-width:22px;
+      color:var(--muted);
+    }
+    .summaryFoulPlayers{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .summaryFoulChip{
+      padding:3px 8px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.25);
+      font-size:12px;
+    }
+    .summaryFoulEmpty{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
   </style>
 </head>
 <body>
@@ -300,26 +712,47 @@
         </div>
         <div class="pill" id="halfPill">1st Half</div>
       </div>
-      <div class="validationStats">
-        <div class="validationStat">
-          <div class="validationCircle" id="validationAll">0%</div>
+      <div id="statsPaneContainer">
+        <div id="statsBlock">
+          <div class="validationLabels">
+            <span>FULL</span>
+            <span>HALF</span>
+            <span>LAST 10</span>
+          </div>
+          <div class="validationStats">
+            <div class="validationStat">
+              <div class="validationCircle" id="validationAll">0%</div>
+            </div>
+            <div class="validationStat">
+              <div class="validationCircle" id="validationHalf">0%</div>
+            </div>
+            <div class="validationStat">
+              <div class="validationCircle" id="validationTen">0%</div>
+            </div>
+          </div>
+          <div class="validationStats pppRow">
+            <div class="validationStat">
+              <div class="validationCircle" id="pppAll">0.00</div>
+            </div>
+            <div class="validationStat">
+              <div class="validationCircle" id="pppHalf">0.00</div>
+            </div>
+            <div class="validationStat">
+              <div class="validationCircle" id="pppTen">0.00</div>
+            </div>
+          </div>
         </div>
-        <div class="validationStat">
-          <div class="validationCircle" id="validationHalf">0%</div>
-        </div>
-        <div class="validationStat">
-          <div class="validationCircle" id="validationTen">0%</div>
-        </div>
-      </div>
-      <div class="validationStats pppRow">
-        <div class="validationStat">
-          <div class="validationCircle" id="pppAll">0.00</div>
-        </div>
-        <div class="validationStat">
-          <div class="validationCircle" id="pppHalf">0.00</div>
-        </div>
-        <div class="validationStat">
-          <div class="validationCircle" id="pppTen">0.00</div>
+        <div id="foulSummaryBlock" class="hidden">
+          <div class="foulSummaryGrid">
+            <div class="foulColumn teamA" id="foulColumnA">
+              <div class="foulTeamName" id="foulTeamAName">Knights</div>
+              <div class="foulList" id="foulListA"></div>
+            </div>
+            <div class="foulColumn teamB" id="foulColumnB">
+              <div class="foulTeamName" id="foulTeamBName">Opponent</div>
+              <div class="foulList" id="foulListB"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -355,11 +788,6 @@
 
     <!-- Main tracker -->
     <div class="card hidden" id="mainCard">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-        <button class="btn btnSecondary btnSmall" id="undoBtn" title="Undo last action">UNDO</button>
-        <button class="btn btnSecondary btnSmall" id="endHalfBtn">End Half</button>
-      </div>
-
       <!-- Action buttons (styled by current possession theme) -->
       <div id="actionArea" class="gridActions">
         <button class="btn actionBtn shotBtn" data-action="MADE_3">
@@ -380,18 +808,49 @@
         </button>
         <button class="btn actionBtn" data-action="FOUL">FOUL DRAWN</button>
         <button class="btn actionBtn" data-action="TURNOVER">TURNOVER</button>
-        <button class="btn actionBtn" data-action="TIMEOUT" style="grid-column:1 / -1;">TIMEOUT</button>
+        <button class="btn actionBtn" data-action="TIMEOUT">TIMEOUT</button>
+        <button class="btn btnSecondary controlBtn" id="foulToggleBtn" type="button">Show Fouls</button>
+      </div>
+      <div class="gridActions controlActions" id="controlActions">
+        <button class="btn btnSecondary controlBtn" id="undoBtn" title="Undo last action">UNDO</button>
+        <button class="btn btnSecondary controlBtn" id="endHalfBtn">End Half</button>
       </div>
 
       <!-- Foul sub-menu -->
       <div id="foulArea" class="hidden" style="margin-top:10px;">
-        <div class="hint" style="margin-top:0;">Foul drawn outcome:</div>
-        <div class="gridActions">
+        <div class="foulPlayerCard">
+          <div class="hint" id="foulPlayerPrompt">Who committed the foul?</div>
+          <div class="foulInputRow" id="foulInputRow">
+            <input id="foulPlayerInput" class="foulPlayerInput" placeholder="Player #" inputmode="numeric" />
+            <button class="btn btnSecondary foulConfirmBtn" type="button" id="confirmFoulPlayerBtn">Enter</button>
+          </div>
+          <div class="hint hidden" id="foulPlayerChipsLabel" style="margin-top:10px;">Quick select:</div>
+          <div class="foulChips hidden" id="foulPlayerChips"></div>
+          <button type="button" class="foulSelectedBtn hidden" id="foulSelectedBtn"></button>
+        </div>
+        <div class="hint hidden" id="shotResultHint" style="margin-top:12px;">Shot result?</div>
+        <div class="gridActions foulShotGrid hidden" id="shotResultGrid">
+          <button class="btn actionBtn" data-shot="NO_MAKE">NO MAKE</button>
+          <button class="btn actionBtn" data-shot="MADE_2">MADE 2</button>
+          <button class="btn actionBtn" data-shot="MADE_3">MADE 3</button>
+        </div>
+        <div class="shotResultSummary hidden" id="shotResultSummary">
+          <div class="shotResultSummaryText" id="shotResultSummaryText"></div>
+          <button class="btn btnSecondary btnSmall" type="button" id="shotResultChangeBtn">Change</button>
+        </div>
+        <div class="hint hidden" id="foulOutcomeHint" style="margin-top:0;">Free throws:</div>
+        <div class="gridActions foulOutcomeGrid hidden" id="foulOutcomeGrid">
           <button class="btn actionBtn" data-foul="MISS_ALL">MISS ALL</button>
           <button class="btn actionBtn" data-foul="MADE_1">MADE 1</button>
           <button class="btn actionBtn" data-foul="MADE_2">MADE 2</button>
-          <button class="btn btnSecondary" id="cancelFoulBtn" style="grid-column:1 / -1;">Cancel</button>
+          <button class="btn actionBtn" data-foul="MADE_3">MADE 3</button>
         </div>
+        <div class="hint hidden" id="andOneHint" style="margin-top:0;">And-one free throw:</div>
+        <div class="gridActions foulAndOneGrid hidden" id="foulAndOneGrid">
+          <button class="btn actionBtn" data-andone="MISS">MISS FT</button>
+          <button class="btn actionBtn" data-andone="MAKE">MADE FT</button>
+        </div>
+        <button class="btn btnSecondary" id="cancelFoulBtn" style="margin-top:10px;">Cancel</button>
       </div>
 
       <!-- Timeout sub-menu -->
@@ -417,9 +876,75 @@
         </div>
       </div>
     </div>
+
+    <!-- Summary screen -->
+    <div class="card hidden" id="summaryCard">
+      <div class="summaryToggleRow hidden" id="summaryToggleRow">
+        <button class="summaryToggleBtn" id="summaryToggleBtn" type="button">Toggle Summary View</button>
+      </div>
+      <div class="summaryTitle" id="summaryTitle">Half Summary</div>
+      <div class="summarySection" id="summaryKnightsSection">
+        <div class="summarySectionTitle">Knights Offense</div>
+        <div class="summaryRows" id="summaryKnightsOffense"></div>
+      </div>
+      <div class="summarySection" id="summaryTeamsSection">
+        <div class="summarySectionTitle">Team Totals</div>
+        <div class="summaryTeamGrid">
+          <div class="summaryRows" id="summaryTeamA"></div>
+          <div class="summaryRows" id="summaryTeamB"></div>
+        </div>
+      </div>
+      <div class="summarySection" id="summaryFoulSection">
+        <div class="summarySectionTitle">Fouls by Player</div>
+        <div class="summaryFoulGrid">
+          <div class="summaryFoulColumn">
+            <div class="summaryFoulTeam" id="summaryFoulTeamA">Knights</div>
+            <div class="summaryFoulRows" id="summaryFoulListA"></div>
+          </div>
+          <div class="summaryFoulColumn">
+            <div class="summaryFoulTeam" id="summaryFoulTeamB">Opponent</div>
+            <div class="summaryFoulRows" id="summaryFoulListB"></div>
+          </div>
+        </div>
+      </div>
+      <div class="summarySection hidden" id="secondHalfStartSection">
+        <div class="summarySectionTitle">Second Half</div>
+        <div class="summarySecondHalfPrompt" id="secondHalfStartPrompt">Who starts with the ball?</div>
+        <div class="summaryStartButtons" id="secondHalfStartButtons">
+          <button class="btn actionBtn" data-secondhalf-start="A">Your Team</button>
+          <button class="btn actionBtn" data-secondhalf-start="B">Opponent</button>
+        </div>
+      </div>
+      <div class="summaryActions" id="summaryActionsContainer"></div>
+    </div>
+    <div class="confirmOverlay hidden" id="confirmOverlay">
+      <div class="confirmModal">
+        <div class="confirmMessage" id="confirmMessage">Are you sure?</div>
+        <div class="confirmActions">
+          <button class="confirmBtn" id="confirmCancelBtn" type="button">Cancel</button>
+          <button class="confirmBtn confirmBtn-primary" id="confirmConfirmBtn" type="button">Confirm</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
+    const KNIGHTS_ROSTER = [
+      { number: "11", name: "JP" },
+      { number: "12", name: "Mathias" },
+      { number: "21", name: "Blake" },
+      { number: "23", name: "Damien" },
+      { number: "24", name: "Isaac" },
+      { number: "25", name: "Nate" },
+      { number: "30", name: "Jax" },
+      { number: "31", name: "Hayden" },
+      { number: "33", name: "Gus" },
+      { number: "34", name: "Jacek" },
+      { number: "35", name: "Cole" },
+      { number: "41", name: "Seamus" },
+      { number: "45", name: "Camden" },
+    ];
+
     // --- State ---
     const state = {
       half: 1,
@@ -436,8 +961,17 @@
       awaitingValidationIndex: null,
       halfValidation: { total: 0, validated: 0 },
       homePossHistory: [],
+      possessionEvents: [],
       timeoutsUsed: { full: 0, half: 0 },
-      log: []
+      foulCounts: { A: {}, B: {} },
+      foulEvents: [],
+      currentFoul: null,
+      showFoulSummary: false,
+      log: [],
+      activePanel: "actions",
+      gameStarted: false,
+      completedHalves: { 1: null, 2: null, 3: null },
+      summaryView: null // { mode: "half1" | "half2" | "full" }
     };
 
     // History stack for UNDO (full snapshots)
@@ -446,6 +980,56 @@
     const $ = (id) => document.getElementById(id);
     const timeoutFullEls = Array.from(document.querySelectorAll('[data-timeout-type="full"]'));
     const timeoutHalfEls = Array.from(document.querySelectorAll('[data-timeout-type="half"]'));
+    const statsBlock = $("statsBlock");
+    const statsPaneContainer = $("statsPaneContainer");
+    const foulSummaryBlock = $("foulSummaryBlock");
+    const foulListA = $("foulListA");
+    const foulListB = $("foulListB");
+    const foulTeamAName = $("foulTeamAName");
+    const foulTeamBName = $("foulTeamBName");
+    const foulToggleBtn = $("foulToggleBtn");
+    const foulPlayerInput = $("foulPlayerInput");
+    const foulPlayerChips = $("foulPlayerChips");
+    const foulPlayerPrompt = $("foulPlayerPrompt");
+    const foulPlayerChipsLabel = $("foulPlayerChipsLabel");
+    const confirmFoulPlayerBtn = $("confirmFoulPlayerBtn");
+    const foulInputRow = $("foulInputRow");
+    const foulSelectedBtn = $("foulSelectedBtn");
+    const foulOutcomeGrid = $("foulOutcomeGrid");
+    const foulOutcomeHint = $("foulOutcomeHint");
+    const shotResultGrid = $("shotResultGrid");
+    const shotResultHint = $("shotResultHint");
+    const shotResultSummary = $("shotResultSummary");
+    const shotResultSummaryText = $("shotResultSummaryText");
+    const shotResultChangeBtn = $("shotResultChangeBtn");
+    const foulAndOneGrid = $("foulAndOneGrid");
+    const andOneHint = $("andOneHint");
+    const controlActions = $("controlActions");
+    const STORAGE_KEY = "coachingTrackerState";
+    const summaryCard = $("summaryCard");
+    const summaryTitle = $("summaryTitle");
+    const summaryKnightsSection = $("summaryKnightsSection");
+    const summaryKnightsOffense = $("summaryKnightsOffense");
+    const summaryTeamsSection = $("summaryTeamsSection");
+    const summaryTeamA = $("summaryTeamA");
+    const summaryTeamB = $("summaryTeamB");
+    const summaryFoulSection = $("summaryFoulSection");
+    const summaryFoulTeamA = $("summaryFoulTeamA");
+    const summaryFoulTeamB = $("summaryFoulTeamB");
+    const summaryFoulListA = $("summaryFoulListA");
+    const summaryFoulListB = $("summaryFoulListB");
+    const secondHalfStartSection = $("secondHalfStartSection");
+    const secondHalfStartButtons = $("secondHalfStartButtons");
+    const secondHalfStartPrompt = $("secondHalfStartPrompt");
+    const summaryActionsContainer = $("summaryActionsContainer");
+    const summaryToggleRow = $("summaryToggleRow");
+    const summaryToggleBtn = $("summaryToggleBtn");
+    const confirmOverlay = $("confirmOverlay");
+    const confirmMessage = $("confirmMessage");
+    const confirmCancelBtn = $("confirmCancelBtn");
+    const confirmConfirmBtn = $("confirmConfirmBtn");
+    let statsPaneHeightCache = 0;
+    let pendingConfirmAction = null;
 
     function snapshotPush() {
       // store a deep snapshot before we mutate
@@ -473,12 +1057,24 @@
       state.awaitingValidationIndex = restored.awaitingValidationIndex;
       state.halfValidation = restored.halfValidation;
       state.homePossHistory = restored.homePossHistory;
+      state.possessionEvents = restored.possessionEvents;
       state.timeoutsUsed = restored.timeoutsUsed;
+      state.foulCounts = restored.foulCounts;
+      state.foulEvents = restored.foulEvents;
+      state.currentFoul = restored.currentFoul;
+      state.showFoulSummary = restored.showFoulSummary;
       state.log = restored.log;
+      state.activePanel = restored.activePanel || "actions";
+      state.gameStarted = !!restored.gameStarted;
+      state.completedHalves = restored.completedHalves ?? state.completedHalves;
+      ensureCompletedHalvesShape();
+      state.summaryView = restored.summaryView ?? state.summaryView;
 
       // hide any submenus
-      showFoulMenu(false);
+      const keepSummary = !!state.summaryView;
+      showFoulMenu(false, { preserveState: true });
       showTimeoutMenu(false);
+      if (keepSummary) state.activePanel = "summary";
 
       $("undoBtn").disabled = history.length === 0;
       $("undoBtn").style.opacity = history.length === 0 ? 0.6 : 1;
@@ -486,8 +1082,162 @@
       render();
     }
 
+    function applyScreenState() {
+      const setupCard = $("setupCard");
+      const mainCard = $("mainCard");
+      const inSummary = !!state.summaryView;
+      if (!setupCard || !mainCard || !summaryCard) return;
+      if (!state.gameStarted) {
+        setupCard.classList.remove("hidden");
+        mainCard.classList.add("hidden");
+        summaryCard.classList.add("hidden");
+        return;
+      }
+      setupCard.classList.add("hidden");
+      summaryCard.classList.toggle("hidden", !inSummary);
+      mainCard.classList.toggle("hidden", inSummary);
+    }
+
+    function updatePanelVisibility() {
+      const panel = state.activePanel || "actions";
+      const actionArea = $("actionArea");
+      const foulArea = $("foulArea");
+      const timeoutArea = $("timeoutArea");
+      if (panel === "summary") {
+        actionArea?.classList.add("hidden");
+        controlActions?.classList.add("hidden");
+        foulArea?.classList.add("hidden");
+        timeoutArea?.classList.add("hidden");
+        return;
+      }
+      actionArea?.classList.toggle("hidden", panel !== "actions");
+      controlActions?.classList.toggle("hidden", panel !== "actions");
+      foulArea?.classList.toggle("hidden", panel !== "foul");
+      timeoutArea?.classList.toggle("hidden", panel !== "timeout");
+    }
+
+    function ensureCompletedHalvesShape() {
+      if (!state.completedHalves || typeof state.completedHalves !== "object") {
+        state.completedHalves = { 1: null, 2: null, 3: null };
+        return;
+      }
+      [1, 2, 3].forEach((key) => {
+        if (state.completedHalves[key] === undefined) {
+          state.completedHalves[key] = null;
+        }
+      });
+    }
+
+    function showConfirmOverlay(message, actionKey) {
+      if (confirmMessage) confirmMessage.textContent = message || "Are you sure?";
+      pendingConfirmAction = actionKey || null;
+      confirmOverlay?.classList.remove("hidden");
+    }
+
+    function hideConfirmOverlay() {
+      confirmOverlay?.classList.add("hidden");
+      pendingConfirmAction = null;
+    }
+
+    function handleConfirmSelection() {
+      const action = pendingConfirmAction;
+      hideConfirmOverlay();
+      if (action === "endHalfGame") {
+        finalizeEndHalfOrGame();
+      } else if (action === "resetGame") {
+        resetGame({ skipConfirm: true });
+      } else if (action === "startOvertime") {
+        startOvertime();
+      }
+    }
+
+    function persistState() {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      try {
+        const payload = {
+          state,
+          history,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.warn("Persist failed", err);
+      }
+    }
+
+    function restoreFromStorage() {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (!saved || typeof saved !== "object" || !saved.state) return;
+        const restored = saved.state;
+        state.half = restored.half ?? state.half;
+        state.teams = restored.teams ?? state.teams;
+        state.score = restored.score ?? state.score;
+        state.possession = restored.possession ?? state.possession;
+        state.halfStats = restored.halfStats ?? state.halfStats;
+        state.validatedPossessions = restored.validatedPossessions ?? state.validatedPossessions;
+        state.totalPossessions = restored.totalPossessions ?? state.totalPossessions;
+        state.awaitingValidation = restored.awaitingValidation ?? state.awaitingValidation;
+        state.awaitingValidationIndex = restored.awaitingValidationIndex ?? state.awaitingValidationIndex;
+        state.halfValidation = restored.halfValidation ?? state.halfValidation;
+        state.homePossHistory = restored.homePossHistory ?? state.homePossHistory;
+        state.possessionEvents = restored.possessionEvents ?? state.possessionEvents;
+        state.timeoutsUsed = restored.timeoutsUsed ?? state.timeoutsUsed;
+        state.foulCounts = restored.foulCounts ?? state.foulCounts;
+        state.foulEvents = restored.foulEvents ?? state.foulEvents;
+        state.currentFoul = restored.currentFoul ?? state.currentFoul;
+        state.showFoulSummary = restored.showFoulSummary ?? state.showFoulSummary;
+        state.log = restored.log ?? state.log;
+        state.activePanel = restored.activePanel || "actions";
+        state.gameStarted = !!restored.gameStarted;
+        state.completedHalves = restored.completedHalves ?? state.completedHalves;
+        ensureCompletedHalvesShape();
+        state.summaryView = restored.summaryView ?? state.summaryView;
+        if (Array.isArray(state.homePossHistory) && state.homePossHistory.length) {
+          const needHalf = state.homePossHistory.some((e) => e && e.half === undefined);
+          if (needHalf) {
+            state.homePossHistory = state.homePossHistory.map((e) => (e && e.half !== undefined) ? e : { ...(e || {}), half: state.half });
+          }
+        }
+        if (Array.isArray(state.possessionEvents) && state.possessionEvents.length) {
+          const needHalf = state.possessionEvents.some((e) => e && e.half === undefined);
+          if (needHalf) {
+            state.possessionEvents = state.possessionEvents.map((e) => (e && e.half !== undefined) ? e : { ...(e || {}), half: state.half });
+          }
+        }
+        if (Array.isArray(state.foulEvents) && state.foulEvents.length) {
+          const needHalf = state.foulEvents.some((e) => e && e.half === undefined);
+          if (needHalf) {
+            state.foulEvents = state.foulEvents.map((e) => (e && e.half !== undefined) ? e : { ...(e || {}), half: state.half });
+          }
+        }
+        if (Array.isArray(saved.history)) {
+          history.length = 0;
+          saved.history.forEach((entry) => history.push(entry));
+          if (history.length > 200) {
+            history.splice(0, history.length - 200);
+          }
+        }
+      } catch (err) {
+        console.warn("Restore failed", err);
+      }
+    }
+
     function render() {
-      $("halfPill").textContent = state.half === 1 ? "1st Half" : "2nd Half";
+      applyScreenState();
+      updatePanelVisibility();
+      if (!state.gameStarted) {
+        const yourTeamInput = $("yourTeam");
+        const oppTeamInput = $("oppTeam");
+        if (yourTeamInput) yourTeamInput.value = state.teams.A || "";
+        if (oppTeamInput) oppTeamInput.value = state.teams.B || "";
+      }
+      if (summaryCard && state.summaryView) {
+        renderSummary();
+      }
+      $("halfPill").textContent = getHalfLabel();
 
       $("scoreDisplayA").textContent = state.score.A;
       $("scoreDisplayB").textContent = state.score.B;
@@ -503,6 +1253,8 @@
       updateValidationCircle("validationTen", percentLastTen);
       updatePppMetrics(lastSlice, lastTotal);
       renderTimeoutTrack();
+      updateFoulSummaryView();
+      updateFoulInputUI();
 
       // Theme the action buttons by current possession
       const mainCard = $("mainCard");
@@ -521,10 +1273,13 @@
 
       $("undoBtn").disabled = history.length === 0;
       $("undoBtn").style.opacity = history.length === 0 ? 0.6 : 1;
+      $("endHalfBtn").textContent = getEndButtonLabel();
+
+      persistState();
     }
 
     function addLog(text) {
-      const halfLabel = state.half === 1 ? "1H" : "2H";
+      const halfLabel = getHalfShortLabel();
       state.log.push(`<b>${halfLabel}</b> — ${text}`);
     }
 
@@ -534,11 +1289,12 @@
 
     function finishPossession(pointsScored) {
       const team = currentKey();
+      state.possessionEvents.push({ half: state.half, team, points: pointsScored });
 
       if (team === "A") {
         state.totalPossessions += 1;
         state.halfValidation.total += 1;
-        const entry = { points: pointsScored, validated: false };
+        const entry = { half: state.half, points: pointsScored, validated: false };
         state.homePossHistory.push(entry);
         if (pointsScored > 0) {
           state.awaitingValidation = true;
@@ -616,13 +1372,13 @@
 
     function pppToColor(value) {
       const v = Math.max(0, value || 0);
-      if (v <= 0.2) return "#ef4444";
-      if (v >= 1.5) return "#22c55e";
+      if (v <= 0.5) return "#ef4444";
+      if (v >= 1.3) return "#22c55e";
       if (v <= 0.7) {
-        const ratio = (v - 0.2) / 0.5;
+        const ratio = (v - 0.5) / 0.2;
         return mixColor("#ef4444", "#eab308", ratio);
       }
-      const ratio = (v - 0.7) / 0.8;
+      const ratio = (v - 0.7) / 0.6;
       return mixColor("#eab308", "#22c55e", ratio);
     }
 
@@ -650,6 +1406,24 @@
       return points / possessions;
     }
 
+    function getHalfLabel(value = state.half) {
+      if (value === 1) return "1st Half";
+      if (value === 2) return "2nd Half";
+      return "OT";
+    }
+
+    function getHalfShortLabel(value = state.half) {
+      if (value === 1) return "1H";
+      if (value === 2) return "2H";
+      return "OT";
+    }
+
+    function getEndButtonLabel() {
+      if (state.half === 1) return "End Half";
+      if (state.half === 2) return "End Game/OT";
+      return "End OT";
+    }
+
     function renderTimeoutTrack() {
       timeoutFullEls.forEach((el, idx) => {
         el.classList.toggle("timeoutUsed", idx < state.timeoutsUsed.full);
@@ -659,25 +1433,648 @@
       });
     }
 
-    // --- Menus ---
-    function showFoulMenu(on) {
-      $("foulArea").classList.toggle("hidden", !on);
-      if (on) {
-        $("actionArea").classList.add("hidden");
-        $("timeoutArea").classList.add("hidden");
+    function updateFoulSummaryView() {
+      if (!statsBlock || !foulSummaryBlock || !foulToggleBtn) return;
+      const show = !!state.showFoulSummary;
+      statsBlock.classList.toggle("hidden", show);
+      foulSummaryBlock.classList.toggle("hidden", !show);
+      foulToggleBtn.textContent = show ? "Show Stats" : "Show Fouls";
+      foulTeamAName.textContent = state.teams.A || "YOUR TEAM";
+      foulTeamBName.textContent = state.teams.B || "OPPONENT";
+      renderFoulColumn("A", foulListA);
+      renderFoulColumn("B", foulListB);
+      updateStatsPaneHeight();
+    }
+
+    function updateStatsPaneHeight() {
+      if (!statsPaneContainer || !statsBlock) return;
+      const statsVisible = !statsBlock.classList.contains("hidden");
+      if (statsVisible) {
+        const height = statsBlock.offsetHeight || statsBlock.scrollHeight || 0;
+        if (height) statsPaneHeightCache = height;
+      } else if (!statsPaneHeightCache) {
+        const measured = measureStatsBlockHeight();
+        if (measured) statsPaneHeightCache = measured;
+      }
+      if (statsPaneHeightCache) {
+        statsPaneContainer.style.minHeight = `${statsPaneHeightCache}px`;
       } else {
-        $("actionArea").classList.remove("hidden");
+        statsPaneContainer.style.minHeight = "";
       }
     }
 
-    function showTimeoutMenu(on) {
-      $("timeoutArea").classList.toggle("hidden", !on);
-      if (on) {
-        $("actionArea").classList.add("hidden");
-        $("foulArea").classList.add("hidden");
-      } else {
-        $("actionArea").classList.remove("hidden");
+    function measureStatsBlockHeight() {
+      if (!statsBlock) return 0;
+      const wasHidden = statsBlock.classList.contains("hidden");
+      if (!wasHidden) return statsBlock.offsetHeight || statsBlock.scrollHeight || 0;
+      statsBlock.classList.remove("hidden");
+      const height = statsBlock.offsetHeight || statsBlock.scrollHeight || 0;
+      statsBlock.classList.add("hidden");
+      return height;
+    }
+
+    function renderFoulColumn(teamKey, container) {
+      if (!container) return;
+      const counts = state.foulCounts?.[teamKey] || {};
+      const entries = Object.entries(counts);
+      if (!entries.length) {
+        container.innerHTML = '<div class="foulSummaryEmpty">No fouls yet.</div>';
+        return;
       }
+      const grouped = {};
+      entries.forEach(([player, total]) => {
+        if (!grouped[total]) grouped[total] = [];
+        grouped[total].push(player);
+      });
+      const countsSorted = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+      container.innerHTML = countsSorted.map((count) => {
+        const players = grouped[count]
+          .map((p) => p)
+          .sort(playerNumberSort)
+          .map((player) => `<span class="foulChip">${player}</span>`)
+          .join("");
+        return `<div class="foulRow"><span class="foulRowCount">${count}:</span><span class="foulRowPlayers">${players}</span></div>`;
+      }).join("");
+    }
+
+    function playerNumberSort(a, b) {
+      const aNum = parseInt(a, 10);
+      const bNum = parseInt(b, 10);
+      const aValid = !Number.isNaN(aNum);
+      const bValid = !Number.isNaN(bNum);
+      if (aValid && bValid && aNum !== bNum) return aNum - bNum;
+      if (aValid !== bValid) return aValid ? -1 : 1;
+      return a.localeCompare(b);
+    }
+
+    function removeAppliedShotPoints() {
+      const cf = state.currentFoul;
+      if (!cf || !cf.basePointsApplied || !cf.basePoints) return;
+      const team = cf.offenseTeam || currentKey();
+      state.score[team] = Math.max(0, state.score[team] - cf.basePoints);
+      const statKey = cf.basePoints === 3 ? "made3" : "made2";
+      if (state.halfStats?.[team]?.[statKey] !== undefined) {
+        state.halfStats[team][statKey] = Math.max(0, state.halfStats[team][statKey] - 1);
+      }
+      cf.basePoints = 0;
+      cf.basePointsApplied = false;
+    }
+
+    function applyShotPoints(points) {
+      const cf = state.currentFoul;
+      if (!cf || !points) return;
+      const team = cf.offenseTeam || currentKey();
+      cf.offenseTeam = team;
+      cf.basePoints = points;
+      cf.basePointsApplied = true;
+      scorePoints(team, points);
+      if (points === 3) state.halfStats[team].made3 += 1;
+      else state.halfStats[team].made2 += 1;
+    }
+
+    function resetFoulShotState() {
+      const cf = state.currentFoul;
+      if (!cf) return false;
+      const hadApplied = !!cf.basePointsApplied;
+      removeAppliedShotPoints();
+      cf.shotResult = null;
+      cf.ftMode = null;
+      cf.editShotMode = false;
+      return hadApplied;
+    }
+
+    function setFoulShotResult(result) {
+      if (!state.currentFoul) return;
+      const allowed = ["NO_MAKE", "MADE_2", "MADE_3"];
+      if (!allowed.includes(result)) return;
+      if (state.currentFoul.shotResult === result) return;
+      removeAppliedShotPoints();
+      state.currentFoul.shotResult = result;
+      state.currentFoul.ftMode = (result === "MADE_2" || result === "MADE_3") ? "AND_ONE" : "STANDARD";
+      state.currentFoul.editShotMode = false;
+      if (result === "MADE_2") applyShotPoints(2);
+      if (result === "MADE_3") applyShotPoints(3);
+    }
+
+    function shotResultLabel(value) {
+      if (value === "MADE_2") return "Made 2";
+      if (value === "MADE_3") return "Made 3";
+      return "No Make";
+    }
+
+    function getRosterForTeam(teamKey) {
+      if (teamKey === "A") return KNIGHTS_ROSTER;
+      return null;
+    }
+
+    function hasRosterForTeam(teamKey) {
+      const roster = getRosterForTeam(teamKey);
+      return Array.isArray(roster) && roster.length > 0;
+    }
+
+    function getRosterPlayerName(teamKey, number) {
+      const roster = getRosterForTeam(teamKey);
+      if (!roster) return null;
+      const match = roster.find((entry) => String(entry.number) === String(number));
+      return match?.name || null;
+    }
+
+    function calcRatioDisplay(numerator, denominator) {
+      if (!denominator) return { percent: 0, text: `0% (0/0)` };
+      const percent = Math.round((numerator / denominator) * 100);
+      return { percent, text: `${percent}% (${numerator}/${denominator})` };
+    }
+
+    function calcPppDisplay(points, possessions) {
+      if (!possessions) return { value: 0, text: `0.00` };
+      const ppp = points / possessions;
+      return { value: ppp, text: ppp.toFixed(2) };
+    }
+
+    function filterByHalf(list, half) {
+      if (!half) return list;
+      return (list || []).filter((item) => item && item.half === half);
+    }
+
+    function computeFoulsCommitted(teamKey, half) {
+      const events = filterByHalf(state.foulEvents, half).filter((e) => e.defenseTeam === teamKey);
+      const perPlayer = {};
+      events.forEach((e) => {
+        const player = String(e.player || "").trim();
+        if (!player) return;
+        perPlayer[player] = (perPlayer[player] || 0) + 1;
+      });
+      const grouped = {};
+      Object.entries(perPlayer).forEach(([player, count]) => {
+        if (!grouped[count]) grouped[count] = [];
+        grouped[count].push(player);
+      });
+      const countsSorted = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+      const detail = countsSorted.map((count) => {
+        const players = grouped[count].sort(playerNumberSort);
+        return { count, players };
+      });
+      const lines = detail.map(({ count, players }) => `${count}: ${players.join(", ")}`);
+      return { total: events.length, lines, detail };
+    }
+
+    function computeLongestRuns(half) {
+      const events = filterByHalf(state.possessionEvents, half);
+      const longest = { A: 0, B: 0 };
+      let currentTeam = null;
+      let currentPoints = 0;
+      events.forEach((e) => {
+        const pts = e?.points || 0;
+        const team = e?.team;
+        if (!team || pts <= 0) return;
+        if (currentTeam === team) currentPoints += pts;
+        else {
+          currentTeam = team;
+          currentPoints = pts;
+        }
+        if (currentPoints > longest[team]) longest[team] = currentPoints;
+      });
+      return longest;
+    }
+
+    function computeSummary(scope) {
+      const half = scope === "half1" ? 1 : scope === "half2" ? 2 : scope === "ot" ? 3 : null;
+      const homeEntries = filterByHalf(state.homePossHistory, half);
+      const events = filterByHalf(state.possessionEvents, half);
+      const pointsA = events.filter((e) => e.team === "A").reduce((s, e) => s + (e.points || 0), 0);
+      const pointsB = events.filter((e) => e.team === "B").reduce((s, e) => s + (e.points || 0), 0);
+
+      const poss = homeEntries.length;
+      const validated = homeEntries.filter((e) => !!e.validated).length;
+      const scoredPoss = homeEntries.filter((e) => (e.points || 0) > 0).length;
+      const validatedScoring = homeEntries.filter((e) => !!e.validated && (e.points || 0) > 0).length;
+      const ppp = calcPppDisplay(pointsA, poss);
+      const possValid = calcRatioDisplay(validated, poss);
+      const scoreValid = calcRatioDisplay(validatedScoring, scoredPoss);
+
+      const halfStatsSnapshot = half ? (state.completedHalves?.[half]?.halfStats || (state.half === half ? state.halfStats : null)) : null;
+      const turnoversA = half ? (halfStatsSnapshot?.A?.turnovers || 0) : sumCompletedTeamStat("A", "turnovers");
+      const turnoversB = half ? (halfStatsSnapshot?.B?.turnovers || 0) : sumCompletedTeamStat("B", "turnovers");
+
+      const foulsA = computeFoulsCommitted("A", half);
+      const foulsB = computeFoulsCommitted("B", half);
+      const longest = computeLongestRuns(half);
+
+      return {
+        title:
+          scope === "half1" ? "First Half Summary" :
+          scope === "half2" ? "Second Half Summary" :
+          scope === "ot" ? "Overtime Summary" :
+          "Full Game Summary",
+        knightsOffense: [
+          { label: "Points per possession", value: ppp.text },
+          { label: "Possession validation", value: possValid.text },
+          { label: "Scoring validation", value: scoreValid.text },
+        ],
+        teams: {
+          A: {
+            name: state.teams.A || "Knights",
+            points: pointsA,
+            turnovers: turnoversA,
+            fouls: foulsA,
+            run: longest.A,
+          },
+          B: {
+            name: state.teams.B || "Opponent",
+            points: pointsB,
+            turnovers: turnoversB,
+            fouls: foulsB,
+            run: longest.B,
+          },
+        },
+      };
+    }
+
+    function summaryRowHtml({ label, value, sub }) {
+      const subHtml = sub ? `<span class="summarySubText">${sub}</span>` : "";
+      return `<div class="summaryRowLine"><span class="summaryLabelText">${label}</span><span class="summaryValueText">${value}${subHtml}</span></div>`;
+    }
+
+    function sumCompletedTeamStat(teamKey, statKey) {
+      return [1, 2, 3].reduce((total, halfKey) => {
+        const stats = state.completedHalves?.[halfKey]?.halfStats;
+        if (stats?.[teamKey]?.[statKey]) {
+          total += stats[teamKey][statKey];
+        }
+        return total;
+      }, 0);
+    }
+
+    function renderSummary() {
+      if (!state.summaryView) return;
+      const displayMode = state.summaryView.displayMode || state.summaryView.mode;
+      const data = computeSummary(displayMode);
+      if (summaryTitle) summaryTitle.textContent = data.title;
+      const awaitingSecondHalfStart = state.summaryView.mode === "half1" && !!state.summaryView.awaitingSecondHalfStart;
+
+      if (summaryKnightsOffense) {
+        summaryKnightsOffense.innerHTML = data.knightsOffense.map((row) => summaryRowHtml(row)).join("");
+      }
+
+      const renderTeamColumn = (teamKey, container) => {
+        if (!container) return;
+        const team = data.teams[teamKey];
+        container.innerHTML = [
+          summaryRowHtml({ label: "Team", value: team.name }),
+          summaryRowHtml({ label: "Points", value: String(team.points) }),
+          summaryRowHtml({ label: "Turnovers", value: String(team.turnovers) }),
+          summaryRowHtml({ label: "Fouls", value: String(team.fouls.total) }),
+          summaryRowHtml({ label: "Best Streak", value: `${team.run} pts` }),
+        ].join("");
+      };
+      renderTeamColumn("A", summaryTeamA);
+      renderTeamColumn("B", summaryTeamB);
+      updateSummaryFouls(data);
+      updateSummaryToggle(displayMode);
+      updateSecondHalfStartUI(awaitingSecondHalfStart);
+      renderSummaryActions();
+    }
+
+    function updateSummaryFouls(data) {
+      if (!summaryFoulSection) return;
+      if (summaryFoulTeamA) summaryFoulTeamA.textContent = data.teams.A.name || "Team A";
+      if (summaryFoulTeamB) summaryFoulTeamB.textContent = data.teams.B.name || "Team B";
+      renderSummaryFoulColumn(data.teams.A, summaryFoulListA);
+      renderSummaryFoulColumn(data.teams.B, summaryFoulListB);
+    }
+
+    function renderSummaryActions() {
+      if (!summaryActionsContainer) return;
+      if (!state.summaryView) {
+        summaryActionsContainer.innerHTML = "";
+        summaryActionsContainer.classList.add("hidden");
+        return;
+      }
+      if (state.summaryView.mode === "half1" && state.summaryView.awaitingSecondHalfStart) {
+        summaryActionsContainer.innerHTML = "";
+        summaryActionsContainer.classList.add("hidden");
+        return;
+      }
+      summaryActionsContainer.classList.remove("hidden");
+      const buttons = [];
+      if (state.summaryView.mode === "half1") {
+        buttons.push({ action: "continue-half1", label: "Continue to 2nd Half" });
+      } else if (state.summaryView.mode === "half2") {
+        buttons.push({ action: "start-ot", label: "Start Overtime" });
+        buttons.push({ action: "show-full", label: "Show Full Game Stats" });
+      } else if (state.summaryView.mode === "ot") {
+        buttons.push({ action: "show-full", label: "Show Full Game Stats" });
+      } else if (state.summaryView.mode === "full") {
+        buttons.push({ action: "reset-game", label: "Start New Game" });
+      }
+      if (!buttons.length) {
+        summaryActionsContainer.innerHTML = "";
+        summaryActionsContainer.classList.add("hidden");
+        return;
+      }
+      summaryActionsContainer.innerHTML = buttons
+        .map((btn) => `<button class="btn btnSecondary controlBtn" data-summary-action="${btn.action}">${btn.label}</button>`)
+        .join("");
+    }
+
+    function renderSummaryFoulColumn(teamData, container) {
+      if (!container || !teamData) return;
+      const detail = teamData.fouls?.detail || [];
+      if (!detail.length) {
+        container.innerHTML = '<div class="summaryFoulEmpty">No fouls recorded.</div>';
+        return;
+      }
+      container.innerHTML = detail.map(({ count, players }) => {
+        const chips = players.map((player) => `<span class="summaryFoulChip">${player}</span>`).join("");
+        return `<div class="summaryFoulRow"><span class="summaryFoulCount">${count}:</span><span class="summaryFoulPlayers">${chips}</span></div>`;
+      }).join("");
+    }
+
+    function updateSummaryToggle(displayMode) {
+      if (!summaryToggleRow || !summaryToggleBtn) return;
+      const showToggle = shouldShowSummaryToggle();
+      summaryToggleRow.classList.toggle("hidden", !showToggle);
+      if (!showToggle) return;
+      summaryToggleBtn.textContent = `View: ${summaryModeLabel(displayMode)}`;
+    }
+
+    function updateSecondHalfStartUI(showSelect) {
+      summaryKnightsSection?.classList.toggle("hidden", showSelect);
+      summaryTeamsSection?.classList.toggle("hidden", showSelect);
+      summaryFoulSection?.classList.toggle("hidden", showSelect);
+      summaryActionsContainer?.classList.toggle("hidden", showSelect);
+      if (!secondHalfStartSection) return;
+      secondHalfStartSection.classList.toggle("hidden", !showSelect);
+      if (!showSelect) return;
+      const teamAName = state.teams.A || "Knights";
+      const teamBName = state.teams.B || "Opponent";
+      if (secondHalfStartPrompt) {
+        secondHalfStartPrompt.textContent = `Who should start with the ball for the 2nd half?`;
+      }
+      const btnA = secondHalfStartButtons?.querySelector('[data-secondhalf-start="A"]');
+      const btnB = secondHalfStartButtons?.querySelector('[data-secondhalf-start="B"]');
+      if (btnA) btnA.textContent = teamAName;
+      if (btnB) btnB.textContent = teamBName;
+    }
+
+    function showFullSummary() {
+      const desiredDisplay = (state.summaryView?.mode === "full" && state.summaryView?.displayMode) ? state.summaryView.displayMode : "full";
+      state.summaryView = { mode: "full", displayMode: desiredDisplay };
+      state.activePanel = "summary";
+      render();
+    }
+
+    function handleSummaryAction(action) {
+      if (!action || !state.summaryView) return;
+      if (action === "continue-half1") {
+        continueFromSummary();
+        return;
+      }
+      if (action === "start-ot") {
+        confirmStartOvertime();
+        return;
+      }
+      if (action === "show-full") {
+        showFullSummary();
+        return;
+      }
+      if (action === "reset-game") {
+        resetGame();
+        return;
+      }
+    }
+
+    function shouldShowSummaryToggle() {
+      if (!state.summaryView || state.summaryView.mode !== "full") return false;
+      return summaryToggleModes().length > 1;
+    }
+
+    function summaryToggleModes() {
+      const modes = [];
+      if (state.completedHalves?.[1]) modes.push("half1");
+      if (state.completedHalves?.[2]) modes.push("half2");
+      if (state.completedHalves?.[3]) modes.push("ot");
+      modes.push("full");
+      return modes;
+    }
+
+    function summaryModeLabel(mode) {
+      if (mode === "half1") return "1st Half";
+      if (mode === "half2") return "2nd Half";
+      if (mode === "ot") return "OT";
+      return "Full Game";
+    }
+
+    function cycleSummaryDisplayMode() {
+      if (!state.summaryView) return;
+      const modes = summaryToggleModes();
+      if (modes.length < 2) return;
+      const current = state.summaryView.displayMode || state.summaryView.mode;
+      const currentIndex = modes.indexOf(current);
+      const nextMode = modes[(currentIndex + 1) % modes.length];
+      state.summaryView.displayMode = nextMode;
+      persistState();
+      render();
+    }
+
+    function updateFoulInputUI() {
+      if (!foulPlayerInput) return;
+      const cf = state.currentFoul;
+      if (!cf) {
+        foulPlayerInput.value = "";
+        foulPlayerInput.placeholder = "Player #";
+        foulPlayerInput.classList.remove("teamA", "teamB", "inputError");
+        foulPlayerPrompt.textContent = "Who committed the foul?";
+        foulPlayerChips.innerHTML = "";
+        foulPlayerChipsLabel.classList.add("hidden");
+        foulPlayerChips.classList.add("hidden");
+        foulPlayerChips.classList.remove("inputError");
+        foulInputRow?.classList.add("hidden");
+        foulSelectedBtn?.classList.add("hidden");
+        shotResultHint?.classList.add("hidden");
+        shotResultGrid?.classList.add("hidden");
+        foulOutcomeHint?.classList.add("hidden");
+        foulOutcomeGrid?.classList.add("hidden");
+        andOneHint?.classList.add("hidden");
+        foulAndOneGrid?.classList.add("hidden");
+        return;
+      }
+      const teamName = cf.defenseTeam === "A" ? (state.teams.A || "Your team") : (state.teams.B || "Opponent");
+      const roster = getRosterForTeam(cf.defenseTeam);
+      const useRoster = Array.isArray(roster) && roster.length > 0;
+      foulPlayerPrompt.textContent = useRoster ? `Select ${teamName} player` : `Foul committed by ${teamName}`;
+      if (!cf.confirmed && !useRoster) {
+        foulPlayerInput.value = cf.player || "";
+      }
+      foulPlayerInput.placeholder = `${teamName} #`;
+      foulPlayerInput.classList.remove("inputError");
+      foulPlayerInput.classList.toggle("teamA", cf.defenseTeam === "A");
+      foulPlayerInput.classList.toggle("teamB", cf.defenseTeam === "B");
+      if (useRoster) {
+        const rosterSorted = roster.slice().sort((a, b) => playerNumberSort(a.number, b.number));
+        foulPlayerChips.innerHTML = !cf.confirmed
+          ? rosterSorted.map(({ number, name }) =>
+              `<button type="button" class="foulChipBtn foulRosterBtn" data-player="${number}">
+                <span class="rosterNumber">#${number}</span>
+                <span class="rosterName">${name}</span>
+              </button>`
+            ).join("")
+          : "";
+        foulPlayerChipsLabel.textContent = "Select player";
+        foulPlayerChipsLabel.classList.toggle("hidden", !!cf.confirmed);
+        foulPlayerChips.classList.toggle("hidden", !!cf.confirmed);
+        foulInputRow?.classList.add("hidden");
+      } else {
+        const counts = state.foulCounts?.[cf.defenseTeam] || {};
+        const players = Object.keys(counts)
+          .map((p) => p)
+          .sort(playerNumberSort);
+        foulPlayerChips.innerHTML = players.map((player) =>
+          `<button type="button" class="foulChipBtn" data-player="${player}">${player}</button>`
+        ).join("");
+        const showChips = !cf.confirmed && players.length > 0;
+        foulPlayerChipsLabel.textContent = "Quick select:";
+        foulPlayerChipsLabel.classList.toggle("hidden", !showChips);
+        foulPlayerChips.classList.toggle("hidden", !showChips);
+        foulInputRow?.classList.toggle("hidden", !!cf.confirmed);
+      }
+      if (foulSelectedBtn) {
+        if (cf.confirmed) {
+          const playerName = getRosterPlayerName(cf.defenseTeam, cf.player);
+          foulSelectedBtn.textContent = playerName ? `${playerName} (#${cf.player})` : `#${cf.player}`;
+          foulSelectedBtn.classList.remove("hidden");
+          foulSelectedBtn.classList.toggle("teamA", cf.defenseTeam === "A");
+          foulSelectedBtn.classList.toggle("teamB", cf.defenseTeam === "B");
+        } else {
+          foulSelectedBtn.classList.add("hidden");
+          foulSelectedBtn.classList.remove("teamA", "teamB");
+        }
+      }
+      const showShotStep = !!cf.confirmed;
+      const shotIsAndOne = cf.shotResult === "MADE_2" || cf.shotResult === "MADE_3";
+      const shotSelected = !!cf.shotResult && !cf.editShotMode;
+      const showShotGrid = showShotStep && (!cf.shotResult || cf.editShotMode);
+      const showStandardFt = showShotStep && cf.shotResult === "NO_MAKE";
+      const showAndOne = showShotStep && shotIsAndOne;
+      shotResultHint?.classList.toggle("hidden", !showShotStep || shotSelected);
+      shotResultGrid?.classList.toggle("hidden", !showShotGrid);
+      if (shotResultGrid) {
+        shotResultGrid.querySelectorAll("button[data-shot]").forEach((btn) => {
+          const val = btn.getAttribute("data-shot");
+          btn.classList.toggle("btnSelected", cf.shotResult === val);
+        });
+      }
+      if (shotResultSummary) {
+        shotResultSummary.classList.toggle("hidden", !shotSelected);
+        if (shotSelected && shotResultSummaryText) {
+          shotResultSummaryText.textContent = `Shot result: ${shotResultLabel(cf.shotResult)}`;
+        }
+      }
+      foulOutcomeHint?.classList.toggle("hidden", !showStandardFt);
+      foulOutcomeGrid?.classList.toggle("hidden", !showStandardFt);
+      andOneHint?.classList.toggle("hidden", !showAndOne);
+      foulAndOneGrid?.classList.toggle("hidden", !showAndOne);
+    }
+
+    function setCurrentFoulPlayer(value) {
+      if (!state.currentFoul) return;
+      state.currentFoul.player = (value || "").trim();
+      state.currentFoul.confirmed = false;
+      const removedShot = resetFoulShotState();
+      if (value !== undefined) {
+        foulPlayerInput?.classList.remove("inputError");
+        foulPlayerChips?.classList.remove("inputError");
+      }
+      if (removedShot) {
+        render();
+      } else {
+        updateFoulInputUI();
+        persistState();
+      }
+    }
+
+    function ensureFoulPlayerConfirmed() {
+      if (state.currentFoul && state.currentFoul.player && state.currentFoul.confirmed) return true;
+      const usesRoster = state.currentFoul ? hasRosterForTeam(state.currentFoul.defenseTeam) : false;
+      if (usesRoster) {
+        foulPlayerChips?.classList.add("inputError");
+      } else {
+        foulPlayerInput?.classList.add("inputError");
+        foulPlayerInput?.focus();
+      }
+      return false;
+    }
+
+    function recordCurrentFoul() {
+      if (!state.currentFoul || !state.currentFoul.player || !state.currentFoul.confirmed) return;
+      const { defenseTeam, player } = state.currentFoul;
+      if (!state.foulCounts[defenseTeam]) state.foulCounts[defenseTeam] = {};
+      state.foulCounts[defenseTeam][player] = (state.foulCounts[defenseTeam][player] || 0) + 1;
+      state.foulEvents.push({ half: state.half, defenseTeam, player });
+      state.currentFoul = null;
+      updateFoulInputUI();
+      persistState();
+    }
+
+    function confirmFoulPlayer() {
+      if (!state.currentFoul) return;
+      const valueFromState = (state.currentFoul.player || "").trim();
+      const typedValue = (foulPlayerInput?.value || "").trim();
+      const value = typedValue || valueFromState;
+      if (!value) {
+        foulPlayerInput?.classList.add("inputError");
+        foulPlayerInput?.focus();
+        return;
+      }
+      state.currentFoul.player = value;
+      state.currentFoul.confirmed = true;
+      foulPlayerInput?.classList.remove("inputError");
+      updateFoulInputUI();
+      persistState();
+    }
+
+    function editFoulPlayer() {
+      if (!state.currentFoul) return;
+      state.currentFoul.confirmed = false;
+      const removedShot = resetFoulShotState();
+      foulPlayerInput?.classList.remove("inputError");
+      foulPlayerChips?.classList.remove("inputError");
+      if (removedShot) {
+        render();
+      } else {
+        updateFoulInputUI();
+        if (!hasRosterForTeam(state.currentFoul.defenseTeam)) {
+          foulPlayerInput?.focus();
+        }
+        persistState();
+      }
+    }
+
+    // --- Menus ---
+    function showFoulMenu(on, options = {}) {
+      const preserveState = !!options.preserveState;
+      state.activePanel = on ? "foul" : "actions";
+      updatePanelVisibility();
+      if (!on && !preserveState) {
+        state.currentFoul = null;
+        updateFoulInputUI();
+      }
+      persistState();
+    }
+
+    function cancelFoulEntry() {
+      if (state.currentFoul) {
+        resetFoulShotState();
+        state.currentFoul = null;
+      }
+      showFoulMenu(false);
+      render();
+    }
+
+    function showTimeoutMenu(on) {
+      state.activePanel = on ? "timeout" : "actions";
+      updatePanelVisibility();
+      persistState();
     }
 
     // --- Actions ---
@@ -719,6 +2116,18 @@
         snapshotPush(); // counts the foul tap as an action
         state.halfStats[t].fouls += 1;
         addLog(`${name}: FOUL DRAWN…`);
+        const defenseTeam = t === "A" ? "B" : "A";
+        state.currentFoul = {
+          defenseTeam,
+          player: "",
+          confirmed: false,
+          shotResult: null,
+          basePoints: 0,
+          basePointsApplied: false,
+          offenseTeam: t,
+          ftMode: null,
+        };
+        updateFoulInputUI();
         showFoulMenu(true);
       }
 
@@ -732,31 +2141,132 @@
       render();
     }
 
+    function handleShotResultChoice(result) {
+      if (!ensureFoulPlayerConfirmed()) return;
+      setFoulShotResult(result);
+      render();
+    }
+
+    function editShotResult() {
+      if (!state.currentFoul) return;
+      state.currentFoul.editShotMode = true;
+      render();
+    }
+
+
     function handleFoulOutcome(outcome) {
+
+      if (!ensureFoulPlayerConfirmed()) return;
+
+      const foulSnapshot = state.currentFoul;
+
+      recordCurrentFoul();
+
       const t = currentKey();
+
       const name = (t === "A") ? state.teams.A : state.teams.B;
+
       let points = 0;
 
+
+
       if (outcome === "MISS_ALL") {
-        addLog(`${name}: FT MISS ALL (+0) → switch`);
+
+        addLog(`${name}: FT MISS ALL (+0) ƒ+' switch`);
+
       } else if (outcome === "MADE_1") {
+
         points = 1;
+
         state.halfStats[t].ftMade += 1;
-        addLog(`${name}: FT MADE 1 (+1) → switch`);
+
+        addLog(`${name}: FT MADE 1 (+1) ƒ+' switch`);
+
       } else if (outcome === "MADE_2") {
+
         points = 2;
+
         state.halfStats[t].ftMade += 2;
-        addLog(`${name}: FT MADE 2 (+2) → switch`);
+
+        addLog(`${name}: FT MADE 2 (+2) ƒ+' switch`);
+
+      } else if (outcome === "MADE_3") {
+
+        points = 3;
+
+        state.halfStats[t].ftMade += 3;
+
+        addLog(`${name}: FT MADE 3 (+3) ƒ+' switch`);
+
       }
 
+
+
       if (points > 0) {
+
         scorePoints(t, points);
+
+      }
+
+
+
+      showFoulMenu(false);
+
+      const totalPoints = (foulSnapshot?.basePoints || 0) + points;
+
+      finishPossession(totalPoints);
+
+      render();
+
+    }
+
+
+
+    function handleAndOneOutcome(result) {
+
+      if (!ensureFoulPlayerConfirmed()) return;
+
+      const foulSnapshot = state.currentFoul;
+
+      if (!foulSnapshot) return;
+
+      const basePoints = foulSnapshot.basePoints || 0;
+
+      recordCurrentFoul();
+
+      const t = currentKey();
+
+      const name = (t === "A") ? state.teams.A : state.teams.B;
+
+      let ftPoints = 0;
+
+      if (result === "MAKE") {
+
+        ftPoints = 1;
+
+        state.halfStats[t].ftMade += 1;
+
+        addLog(`${name}: AND-ONE ${basePoints} + FT MADE (+${basePoints + 1}) ƒ+' switch`);
+      } else {
+
+        addLog(`${name}: AND-ONE ${basePoints} + FT MISS (+${basePoints}) ƒ+' switch`);
+      }
+
+      if (ftPoints > 0) {
+
+        scorePoints(t, ftPoints);
+
       }
 
       showFoulMenu(false);
-      finishPossession(points);
+
+      finishPossession(basePoints + ftPoints);
+
       render();
+
     }
+
+
 
     function handleTimeoutChoice(kind) {
       const t = currentKey();
@@ -782,46 +2292,146 @@
     }
 
     // --- Half / Reset ---
-    function endHalf() {
+    function openSummary(mode) {
+      const summaryState = { mode, displayMode: mode };
+      if (mode === "half1") summaryState.awaitingSecondHalfStart = false;
+      state.summaryView = summaryState;
+      showFoulMenu(false, { preserveState: true });
+      showTimeoutMenu(false);
+      state.activePanel = "summary";
+      render();
+    }
+
+    function endHalfOrGame() {
+      let message = "Are you sure you want to end the half?";
+      if (state.half === 2) {
+        message = "End regulation? You'll be able to start overtime or view final stats next.";
+      } else if (state.half >= 3) {
+        message = "Are you sure you want to end overtime?";
+      }
+      showConfirmOverlay(message, "endHalfGame");
+    }
+
+    function finalizeEndHalfOrGame() {
       snapshotPush();
-      if (state.half === 1) {
-        addLog(`<b>END OF 1ST HALF</b> — stats reset for 2nd half`);
-        state.half = 2;
-      } else {
-        addLog(`<b>END OF 2ND HALF</b> — stats reset`);
+      const half = state.half;
+      state.completedHalves[half] = { halfStats: JSON.parse(JSON.stringify(state.halfStats)) };
+
+      if (half === 1) {
+        addLog(`<b>END OF 1ST HALF</b> — summary`);
+        openSummary("half1");
+        return;
       }
 
+      if (half === 2) {
+        addLog(`<b>END OF REGULATION</b> — summary`);
+        openSummary("half2");
+        return;
+      }
+
+      if (half === 3) {
+        addLog(`<b>END OF OVERTIME</b> — summary`);
+        openSummary("ot");
+        return;
+      }
+    }
+
+    function continueFromSummary() {
+      const mode = state.summaryView?.mode;
+      if (mode !== "half1") return;
+      if (!state.summaryView.awaitingSecondHalfStart) {
+        state.summaryView.awaitingSecondHalfStart = true;
+        render();
+      }
+    }
+
+    function selectSecondHalfStarter(teamKey) {
+      if (!state.summaryView || state.summaryView.mode !== "half1" || !state.summaryView.awaitingSecondHalfStart) return;
+      const starter = (teamKey === "B") ? "B" : "A";
+      startSecondHalf(starter);
+    }
+
+    function resetHalfState() {
       state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
       state.awaitingValidation = false;
       state.awaitingValidationIndex = null;
       state.halfValidation = { total:0, validated:0 };
+      state.currentFoul = null;
       showFoulMenu(false);
       showTimeoutMenu(false);
+    }
+
+    function startSecondHalf(startTeam) {
+      resetHalfState();
+      state.summaryView = null;
+      state.activePanel = "actions";
+      state.half = 2;
+      state.possession = startTeam || state.possession || "A";
       render();
     }
 
-    function resetGame() {
-      snapshotPush();
+    function confirmStartOvertime() {
+      showConfirmOverlay("Start overtime?", "startOvertime");
+    }
+
+    function startOvertime(startTeam) {
+      resetHalfState();
+      state.summaryView = null;
+      state.activePanel = "actions";
+      state.half = 3;
+      state.possession = startTeam || state.possession || "A";
+      state.completedHalves[3] = null;
+      render();
+    }
+
+    function resetGame(options = {}) {
+      const skipConfirm = !!options.skipConfirm;
+      if (!skipConfirm) {
+        showConfirmOverlay("Are you sure you want to reset the game?", "resetGame");
+        return;
+      }
+
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      history.length = 0;
       state.half = 1;
-      state.score.A = 0;
-      state.score.B = 0;
+      state.teams = { A: "Knights", B: "Opponent" };
+      state.score = { A: 0, B: 0 };
       state.possession = "A";
-      state.halfStats.A = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
-      state.halfStats.B = { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 };
+      state.halfStats = {
+        A: { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 },
+        B: { made2:0, made3:0, fouls:0, turnovers:0, timeoutsHalf:0, timeoutsFull:0, ftMade:0 },
+      };
       state.validatedPossessions = 0;
       state.totalPossessions = 0;
       state.awaitingValidation = false;
       state.awaitingValidationIndex = null;
       state.halfValidation = { total:0, validated:0 };
       state.homePossHistory = [];
+      state.possessionEvents = [];
       state.timeoutsUsed = { full:0, half:0 };
+      state.foulCounts = { A:{}, B:{} };
+      state.foulEvents = [];
+      state.currentFoul = null;
+      state.showFoulSummary = false;
       state.log = [];
+      state.activePanel = "actions";
+      state.gameStarted = false;
+      state.completedHalves = { 1: null, 2: null, 3: null };
+      state.summaryView = null;
+
+      const startRadioA = document.querySelector('input[name="startPoss"][value="A"]');
+      const startRadioB = document.querySelector('input[name="startPoss"][value="B"]');
+      if (startRadioA) startRadioA.checked = true;
+      if (startRadioB) startRadioB.checked = false;
+
       showFoulMenu(false);
       showTimeoutMenu(false);
-      addLog("Game reset.");
+      updateFoulInputUI();
       render();
     }
+
+    restoreFromStorage();
 
     // --- Wire up UI ---
     $("enterBtn").addEventListener("click", () => {
@@ -842,14 +2452,50 @@
       state.awaitingValidationIndex = null;
       state.halfValidation = { total:0, validated:0 };
       state.homePossHistory = [];
+      state.possessionEvents = [];
       state.timeoutsUsed = { full:0, half:0 };
-
-      $("setupCard").classList.add("hidden");
-      $("mainCard").classList.remove("hidden");
+      state.foulCounts = { A:{}, B:{} };
+      state.foulEvents = [];
+      state.currentFoul = null;
+      state.showFoulSummary = false;
+      state.completedHalves = { 1: null, 2: null, 3: null };
+      state.summaryView = null;
+      state.activePanel = "actions";
+      state.gameStarted = true;
 
       addLog(`Game started: <b>${state.teams.A}</b> vs <b>${state.teams.B}</b>.`);
       render();
     });
+
+    if (foulToggleBtn) {
+      foulToggleBtn.addEventListener("click", () => {
+        state.showFoulSummary = !state.showFoulSummary;
+        render();
+      });
+    }
+    if (foulPlayerInput) {
+      foulPlayerInput.addEventListener("input", (e) => setCurrentFoulPlayer(e.target.value));
+      foulPlayerInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmFoulPlayer();
+        }
+      });
+    }
+    if (foulPlayerChips) {
+      foulPlayerChips.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-player]");
+        if (!btn) return;
+        setCurrentFoulPlayer(btn.getAttribute("data-player") || "");
+        confirmFoulPlayer();
+      });
+    }
+    if (confirmFoulPlayerBtn) {
+      confirmFoulPlayerBtn.addEventListener("click", () => confirmFoulPlayer());
+    }
+    if (foulSelectedBtn) {
+      foulSelectedBtn.addEventListener("click", () => editFoulPlayer());
+    }
 
     $("actionArea").addEventListener("click", (e) => {
       const btn = e.target.closest("button");
@@ -861,6 +2507,16 @@
     $("foulArea").addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;
+      const shot = btn.getAttribute("data-shot");
+      if (shot) {
+        handleShotResultChoice(shot);
+        return;
+      }
+      const andOne = btn.getAttribute("data-andone");
+      if (andOne) {
+        handleAndOneOutcome(andOne);
+        return;
+      }
       const outcome = btn.getAttribute("data-foul");
       if (outcome) handleFoulOutcome(outcome);
     });
@@ -872,12 +2528,28 @@
       if (kind) handleTimeoutChoice(kind);
     });
 
-    $("cancelFoulBtn").addEventListener("click", () => { showFoulMenu(false); render(); });
+    $("cancelFoulBtn").addEventListener("click", () => cancelFoulEntry());
+    shotResultChangeBtn?.addEventListener("click", () => editShotResult());
     $("cancelTimeoutBtn").addEventListener("click", () => { showTimeoutMenu(false); render(); });
 
-    $("endHalfBtn").addEventListener("click", endHalf);
-    $("resetBtn").addEventListener("click", resetGame);
+    $("endHalfBtn").addEventListener("click", endHalfOrGame);
+    $("resetBtn").addEventListener("click", () => resetGame());
     $("undoBtn").addEventListener("click", undo);
+    if (summaryToggleBtn) {
+      summaryToggleBtn.addEventListener("click", () => cycleSummaryDisplayMode());
+    }
+    summaryActionsContainer?.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-summary-action]");
+      if (!btn) return;
+      handleSummaryAction(btn.getAttribute("data-summary-action"));
+    });
+    secondHalfStartButtons?.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-secondhalf-start]");
+      if (!btn) return;
+      selectSecondHalfStarter(btn.getAttribute("data-secondhalf-start"));
+    });
+    confirmCancelBtn?.addEventListener("click", () => hideConfirmOverlay());
+    confirmConfirmBtn?.addEventListener("click", () => handleConfirmSelection());
 
     // initial render
     render();
