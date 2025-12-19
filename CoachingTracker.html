@@ -270,6 +270,16 @@
       cursor:pointer;
       font-weight:800;
     }
+    .foulChipBtn.teamA{
+      background:var(--knights);
+      border-color:var(--gold);
+      color:#ffffff;
+    }
+    .foulChipBtn.teamB{
+      background:var(--opp);
+      border-color:var(--black);
+      color:#ffffff;
+    }
     .foulChipBtn:active{
       transform:translateY(1px);
     }
@@ -317,6 +327,12 @@
       color:#ffffff;
     }
     .foulOutcomeGrid.hidden{ display:none; }
+    .foulShotGrid{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+    }
+    .foulShotGrid .shotFull{
+      grid-column:1 / -1;
+    }
 
     .card{
       background:rgba(17,24,39,.82);
@@ -545,6 +561,20 @@
     }
     @media (min-width:520px){
       .summaryStartButtons{ flex-direction:row; }
+    }
+    .startPossBtn{
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .startPossBtn.teamA{
+      background:var(--knights);
+      border-color:var(--gold);
+      color:#ffffff;
+    }
+    .startPossBtn.teamB{
+      background:var(--opp);
+      border-color:var(--black);
+      color:#ffffff;
     }
     .summarySecondHalfPrompt{
       font-size:14px;
@@ -830,7 +860,7 @@
         </div>
         <div class="hint hidden" id="shotResultHint" style="margin-top:12px;">Shot result?</div>
         <div class="gridActions foulShotGrid hidden" id="shotResultGrid">
-          <button class="btn actionBtn" data-shot="NO_MAKE">NO MAKE</button>
+          <button class="btn actionBtn shotFull" data-shot="NO_MAKE">NO MAKE</button>
           <button class="btn actionBtn" data-shot="MADE_2">MADE 2</button>
           <button class="btn actionBtn" data-shot="MADE_3">MADE 3</button>
         </div>
@@ -907,12 +937,12 @@
           </div>
         </div>
       </div>
-      <div class="summarySection hidden" id="secondHalfStartSection">
-        <div class="summarySectionTitle">Second Half</div>
-        <div class="summarySecondHalfPrompt" id="secondHalfStartPrompt">Who starts with the ball?</div>
-        <div class="summaryStartButtons" id="secondHalfStartButtons">
-          <button class="btn actionBtn" data-secondhalf-start="A">Your Team</button>
-          <button class="btn actionBtn" data-secondhalf-start="B">Opponent</button>
+      <div class="summarySection hidden" id="startPossessionSection">
+        <div class="summarySectionTitle" id="startPossessionTitle">Second Half</div>
+        <div class="summarySecondHalfPrompt" id="startPossessionPrompt">Who starts with the ball?</div>
+        <div class="summaryStartButtons" id="startPossessionButtons">
+          <button class="btn actionBtn startPossBtn teamA" data-start-team="A">Your Team</button>
+          <button class="btn actionBtn startPossBtn teamB" data-start-team="B">Opponent</button>
         </div>
       </div>
       <div class="summaryActions" id="summaryActionsContainer"></div>
@@ -1018,9 +1048,10 @@
     const summaryFoulTeamB = $("summaryFoulTeamB");
     const summaryFoulListA = $("summaryFoulListA");
     const summaryFoulListB = $("summaryFoulListB");
-    const secondHalfStartSection = $("secondHalfStartSection");
-    const secondHalfStartButtons = $("secondHalfStartButtons");
-    const secondHalfStartPrompt = $("secondHalfStartPrompt");
+    const startPossessionSection = $("startPossessionSection");
+    const startPossessionButtons = $("startPossessionButtons");
+    const startPossessionPrompt = $("startPossessionPrompt");
+    const startPossessionTitle = $("startPossessionTitle");
     const summaryActionsContainer = $("summaryActionsContainer");
     const summaryToggleRow = $("summaryToggleRow");
     const summaryToggleBtn = $("summaryToggleBtn");
@@ -1146,8 +1177,8 @@
         finalizeEndHalfOrGame();
       } else if (action === "resetGame") {
         resetGame({ skipConfirm: true });
-      } else if (action === "startOvertime") {
-        startOvertime();
+      } else if (action === "prepareOvertime") {
+        prepareOvertimeStartSelection();
       }
     }
 
@@ -1710,7 +1741,7 @@
       const displayMode = state.summaryView.displayMode || state.summaryView.mode;
       const data = computeSummary(displayMode);
       if (summaryTitle) summaryTitle.textContent = data.title;
-      const awaitingSecondHalfStart = state.summaryView.mode === "half1" && !!state.summaryView.awaitingSecondHalfStart;
+      const startSelection = state.summaryView.awaitingStartSelection || null;
 
       if (summaryKnightsOffense) {
         summaryKnightsOffense.innerHTML = data.knightsOffense.map((row) => summaryRowHtml(row)).join("");
@@ -1731,7 +1762,7 @@
       renderTeamColumn("B", summaryTeamB);
       updateSummaryFouls(data);
       updateSummaryToggle(displayMode);
-      updateSecondHalfStartUI(awaitingSecondHalfStart);
+      updateStartSelectionUI(startSelection);
       renderSummaryActions();
     }
 
@@ -1750,7 +1781,7 @@
         summaryActionsContainer.classList.add("hidden");
         return;
       }
-      if (state.summaryView.mode === "half1" && state.summaryView.awaitingSecondHalfStart) {
+      if (state.summaryView.awaitingStartSelection) {
         summaryActionsContainer.innerHTML = "";
         summaryActionsContainer.classList.add("hidden");
         return;
@@ -1798,23 +1829,36 @@
       summaryToggleBtn.textContent = `View: ${summaryModeLabel(displayMode)}`;
     }
 
-    function updateSecondHalfStartUI(showSelect) {
+    function updateStartSelectionUI(selection) {
+      const showSelect = !!selection;
       summaryKnightsSection?.classList.toggle("hidden", showSelect);
       summaryTeamsSection?.classList.toggle("hidden", showSelect);
       summaryFoulSection?.classList.toggle("hidden", showSelect);
       summaryActionsContainer?.classList.toggle("hidden", showSelect);
-      if (!secondHalfStartSection) return;
-      secondHalfStartSection.classList.toggle("hidden", !showSelect);
-      if (!showSelect) return;
+      if (!startPossessionSection) return;
+      startPossessionSection.classList.toggle("hidden", !showSelect);
+      if (!showSelect || !selection) return;
       const teamAName = state.teams.A || "Knights";
       const teamBName = state.teams.B || "Opponent";
-      if (secondHalfStartPrompt) {
-        secondHalfStartPrompt.textContent = `Who should start with the ball for the 2nd half?`;
+      const targetHalf = selection.targetHalf || 2;
+      const titleText = targetHalf === 3 ? "Overtime" : "Second Half";
+      const promptText = selection.prompt || (targetHalf === 3
+        ? "Who should start with the ball for overtime?"
+        : "Who should start with the ball for the 2nd half?");
+      if (startPossessionTitle) startPossessionTitle.textContent = titleText;
+      if (startPossessionPrompt) startPossessionPrompt.textContent = promptText;
+      const btnA = startPossessionButtons?.querySelector('[data-start-team="A"]');
+      const btnB = startPossessionButtons?.querySelector('[data-start-team="B"]');
+      if (btnA) {
+        btnA.textContent = teamAName;
+        btnA.classList.add("teamA");
+        btnA.classList.remove("teamB");
       }
-      const btnA = secondHalfStartButtons?.querySelector('[data-secondhalf-start="A"]');
-      const btnB = secondHalfStartButtons?.querySelector('[data-secondhalf-start="B"]');
-      if (btnA) btnA.textContent = teamAName;
-      if (btnB) btnB.textContent = teamBName;
+      if (btnB) {
+        btnB.textContent = teamBName;
+        btnB.classList.add("teamB");
+        btnB.classList.remove("teamA");
+      }
     }
 
     function showFullSummary() {
@@ -1929,8 +1973,9 @@
         const players = Object.keys(counts)
           .map((p) => p)
           .sort(playerNumberSort);
+        const chipClass = `foulChipBtn ${cf.defenseTeam === "A" ? "teamA" : "teamB"}`;
         foulPlayerChips.innerHTML = players.map((player) =>
-          `<button type="button" class="foulChipBtn" data-player="${player}">${player}</button>`
+          `<button type="button" class="${chipClass}" data-player="${player}">${player}</button>`
         ).join("");
         const showChips = !cf.confirmed && players.length > 0;
         foulPlayerChipsLabel.textContent = "Quick select:";
@@ -2293,8 +2338,7 @@
 
     // --- Half / Reset ---
     function openSummary(mode) {
-      const summaryState = { mode, displayMode: mode };
-      if (mode === "half1") summaryState.awaitingSecondHalfStart = false;
+      const summaryState = { mode, displayMode: mode, awaitingStartSelection: null };
       state.summaryView = summaryState;
       showFoulMenu(false, { preserveState: true });
       showTimeoutMenu(false);
@@ -2338,17 +2382,21 @@
 
     function continueFromSummary() {
       const mode = state.summaryView?.mode;
-      if (mode !== "half1") return;
-      if (!state.summaryView.awaitingSecondHalfStart) {
-        state.summaryView.awaitingSecondHalfStart = true;
-        render();
-      }
+      if (mode !== "half1" || state.summaryView.awaitingStartSelection) return;
+      state.summaryView.awaitingStartSelection = { targetHalf: 2 };
+      render();
     }
 
-    function selectSecondHalfStarter(teamKey) {
-      if (!state.summaryView || state.summaryView.mode !== "half1" || !state.summaryView.awaitingSecondHalfStart) return;
-      const starter = (teamKey === "B") ? "B" : "A";
-      startSecondHalf(starter);
+    function handleStartSelection(teamKey) {
+      if (!state.summaryView || !state.summaryView.awaitingStartSelection) return;
+      const startTeam = (teamKey === "B") ? "B" : "A";
+      const targetHalf = state.summaryView.awaitingStartSelection.targetHalf || 2;
+      state.summaryView.awaitingStartSelection = null;
+      if (targetHalf === 2) {
+        startSecondHalf(startTeam);
+      } else if (targetHalf === 3) {
+        startOvertime(startTeam);
+      }
     }
 
     function resetHalfState() {
@@ -2372,7 +2420,13 @@
     }
 
     function confirmStartOvertime() {
-      showConfirmOverlay("Start overtime?", "startOvertime");
+      showConfirmOverlay("Start overtime?", "prepareOvertime");
+    }
+
+    function prepareOvertimeStartSelection() {
+      if (!state.summaryView || state.summaryView.mode !== "half2") return;
+      state.summaryView.awaitingStartSelection = { targetHalf: 3 };
+      render();
     }
 
     function startOvertime(startTeam) {
@@ -2543,10 +2597,10 @@
       if (!btn) return;
       handleSummaryAction(btn.getAttribute("data-summary-action"));
     });
-    secondHalfStartButtons?.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-secondhalf-start]");
+    startPossessionButtons?.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-start-team]");
       if (!btn) return;
-      selectSecondHalfStarter(btn.getAttribute("data-secondhalf-start"));
+      handleStartSelection(btn.getAttribute("data-start-team"));
     });
     confirmCancelBtn?.addEventListener("click", () => hideConfirmOverlay());
     confirmConfirmBtn?.addEventListener("click", () => handleConfirmSelection());
