@@ -22,6 +22,10 @@
       box-sizing: border-box;
     }
 
+    .hidden {
+      display: none;
+    }
+
     body {
       margin: 0;
       font-family: "Georgia", "Times New Roman", serif;
@@ -256,6 +260,11 @@
       color: #0f172a;
     }
 
+    .chart-zone.selected {
+      outline: 3px solid #0f172a;
+      outline-offset: 2px;
+    }
+
     .chart-zone.left-corner { grid-area: 1 / 1; }
     .chart-zone.short-left { grid-area: 1 / 2; }
     .chart-zone.at-rim { grid-area: 1 / 3; }
@@ -335,6 +344,28 @@
     .legend .cold { background: #f87171; }
     .legend .neutral { background: #fbbf24; }
     .legend .hot { background: #34d399; }
+
+    .zone-breakdown {
+      margin-top: 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 12px;
+    }
+
+    .zone-breakdown h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+
+    .zone-breakdown table {
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    .zone-breakdown td:first-child, .zone-breakdown th:first-child {
+      text-align: left;
+    }
 
     @media (max-width: 720px) {
       header, main {
@@ -441,6 +472,8 @@
 
     const state = {
       games: {},
+      teamShotMode: 'totals',
+      selectedTeamZone: null,
       overall: {
         team: createEmptyStats(),
         players: createRosterStats()
@@ -534,6 +567,13 @@
               <div class="filters">
                 <label>Game</label>
                 <select data-role="shot-chart-select" data-page="team"></select>
+                <span class="filters hidden" data-role="team-shot-mode-wrapper">
+                  <label>Mode</label>
+                  <select data-role="team-shot-mode">
+                    <option value="totals">Totals</option>
+                    <option value="averages">Averages</option>
+                  </select>
+                </span>
               </div>
             </div>
             <div class="shot-chart-wrapper">
@@ -551,6 +591,19 @@
               <span><i class="neutral"></i>Average</span>
               <span><i class="hot"></i>Hot</span>
             </div>
+            <div class="zone-breakdown" data-role="zone-breakdown">
+              <h4 data-role="zone-breakdown-title">Click a zone to see player splits</h4>
+              <table data-role="zone-breakdown-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>FG</th>
+                    <th>FG%</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
           <div class="game-log">
             <div class="section-header">
@@ -565,6 +618,21 @@
               <tbody></tbody>
               <tfoot></tfoot>
             </table>
+          </div>
+          <div class="game-log">
+            <div class="section-header">
+              <h3>Game Log</h3>
+            </div>
+            <div class="zone-breakdown">
+              <table data-role="team-action-log">
+                <thead>
+                  <tr>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         `;
       }
@@ -589,6 +657,13 @@
             <div class="filters">
               <label>Game</label>
               <select data-role="shot-chart-select" data-page="${page.key}"></select>
+              <span class="filters hidden" data-role="player-shot-mode-wrapper" data-page="${page.key}">
+                <label>Mode</label>
+                <select data-role="player-shot-mode" data-page="${page.key}">
+                  <option value="totals">Totals</option>
+                  <option value="averages">Averages</option>
+                </select>
+              </span>
             </div>
           </div>
           <div class="shot-chart-wrapper">
@@ -648,6 +723,8 @@
 
     function resetState() {
       state.games = {};
+      state.teamShotMode = 'totals';
+      state.selectedTeamZone = null;
       state.overall.team = createEmptyStats();
       state.overall.players = createRosterStats();
     }
@@ -703,6 +780,8 @@
       let gameDate = '';
       const gamePlayers = createRosterStats();
       let teamStats = null;
+      const actionLog = [];
+      let inActionLog = false;
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -710,7 +789,16 @@
           continue;
         }
         if (row[0] && row[0].trim() === 'Action Log') {
-          break;
+          inActionLog = true;
+          continue;
+        }
+
+        if (inActionLog) {
+          const entry = String(row[0] || '').trim();
+          if (entry) {
+            actionLog.push(entry);
+          }
+          continue;
         }
 
         const playerName = getValue(row, headerMap, 'Player Name');
@@ -750,7 +838,8 @@
         id: gameId || file.name.replace(/\.csv$/i, ''),
         date: gameDate || 'Unknown',
         team: teamStats,
-        players: gamePlayers
+        players: gamePlayers,
+        actionLog
       };
 
       return { key: gameKey, game };
@@ -965,9 +1054,34 @@
       document.querySelectorAll('[data-role="shot-chart-select"]').forEach(select => {
         setSelectOptions(select, shotChartOptions, 'all');
         bindSelectOnce(select, () => {
+          if (select.dataset.page === 'team') {
+            updateTeamShotModeVisibility();
+          } else {
+            updatePlayerShotModeVisibility(select.dataset.page);
+          }
           renderShotChartForPage(select.dataset.page, select.value);
+          if (select.dataset.page === 'team') {
+            renderTeamZoneBreakdown(state.selectedTeamZone, select.value);
+          }
         });
       });
+
+      document.querySelectorAll('[data-role="player-shot-mode"]').forEach(select => {
+        select.value = select.value || 'totals';
+        bindSelectOnce(select, () => {
+          renderShotChartForPage(select.dataset.page, getShotChartSelection(select.dataset.page));
+        });
+      });
+
+      const teamShotModeSelect = document.querySelector('[data-role="team-shot-mode"]');
+      if (teamShotModeSelect) {
+        teamShotModeSelect.value = state.teamShotMode;
+        bindSelectOnce(teamShotModeSelect, () => {
+          state.teamShotMode = teamShotModeSelect.value;
+          renderShotChartForPage('team', getShotChartSelection('team'));
+          renderTeamZoneBreakdown(state.selectedTeamZone, getShotChartSelection('team'));
+        });
+      }
 
       const teamViewSelect = document.querySelector('[data-role="team-view"]');
       if (teamViewSelect) {
@@ -984,10 +1098,58 @@
       renderTeamTable();
       renderTeamBoxScore();
       renderAllShotCharts();
+      const teamChart = document.querySelector('[data-role="shot-chart"][data-page="team"]');
+      if (teamChart) {
+        teamChart.querySelectorAll('.chart-zone').forEach(zone => zone.classList.remove('selected'));
+      }
+      setupTeamZoneClickHandler();
+      updateTeamShotModeVisibility();
+      updateAllPlayerShotModeVisibility();
+      renderTeamZoneBreakdown(state.selectedTeamZone, getShotChartSelection('team'));
     }
 
     function getSortedGames() {
       return Object.values(state.games).slice().sort((a, b) => a.id.localeCompare(b.id));
+    }
+
+    function getShotChartSelection(pageKey) {
+      const select = document.querySelector(`[data-role="shot-chart-select"][data-page="${pageKey}"]`);
+      return select ? select.value : 'all';
+    }
+
+    function getTeamShotMode() {
+      const select = document.querySelector('[data-role="team-shot-mode"]');
+      if (select) {
+        state.teamShotMode = select.value || state.teamShotMode;
+      }
+      return state.teamShotMode || 'totals';
+    }
+
+    function updateTeamShotModeVisibility() {
+      const wrapper = document.querySelector('[data-role="team-shot-mode-wrapper"]');
+      if (!wrapper) {
+        return;
+      }
+      const show = getShotChartSelection('team') === 'all';
+      wrapper.classList.toggle('hidden', !show);
+    }
+
+    function getPlayerShotMode(pageKey) {
+      const select = document.querySelector(`[data-role="player-shot-mode"][data-page="${pageKey}"]`);
+      return select ? select.value : 'totals';
+    }
+
+    function updatePlayerShotModeVisibility(pageKey) {
+      const wrapper = document.querySelector(`[data-role="player-shot-mode-wrapper"][data-page="${pageKey}"]`);
+      if (!wrapper) {
+        return;
+      }
+      const show = getShotChartSelection(pageKey) === 'all';
+      wrapper.classList.toggle('hidden', !show);
+    }
+
+    function updateAllPlayerShotModeVisibility() {
+      roster.forEach(player => updatePlayerShotModeVisibility(String(player.number)));
     }
 
     function getGameCount() {
@@ -1168,6 +1330,27 @@
       });
 
       tfoot.appendChild(buildFooterRow('Team Totals', game.team, false, false));
+      renderTeamActionLog(game);
+    }
+
+    function renderTeamActionLog(game) {
+      const logTable = document.querySelector('[data-role="team-action-log"] tbody');
+      if (!logTable) {
+        return;
+      }
+      logTable.innerHTML = '';
+      const entries = Array.isArray(game?.actionLog) ? game.actionLog : [];
+      if (!entries.length) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td>No action log entries found.</td>';
+        logTable.appendChild(row);
+        return;
+      }
+      entries.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${entry}</td>`;
+        logTable.appendChild(row);
+      });
     }
 
     function renderAllShotCharts() {
@@ -1178,13 +1361,92 @@
       });
     }
 
+    function setupTeamZoneClickHandler() {
+      const container = document.querySelector('[data-role="shot-chart"][data-page="team"]');
+      if (!container || container.dataset.bound) {
+        return;
+      }
+      container.addEventListener('click', (event) => {
+        const zoneBox = event.target.closest('.chart-zone');
+        if (!zoneBox) {
+          return;
+        }
+        const zoneKey = zoneBox.dataset.zone;
+        if (!zoneKey) {
+          return;
+        }
+        state.selectedTeamZone = zoneKey;
+        container.querySelectorAll('.chart-zone').forEach(box => {
+          box.classList.toggle('selected', box === zoneBox);
+        });
+        renderTeamZoneBreakdown(zoneKey, getShotChartSelection('team'));
+      });
+      container.dataset.bound = 'true';
+    }
+
+    function renderTeamZoneBreakdown(zoneKey, gameKey) {
+      const breakdown = document.querySelector('[data-role="zone-breakdown"]');
+      if (!breakdown) {
+        return;
+      }
+      const title = breakdown.querySelector('[data-role="zone-breakdown-title"]');
+      const tbody = breakdown.querySelector('tbody');
+      if (!tbody || !title) {
+        return;
+      }
+
+      tbody.innerHTML = '';
+      if (!zoneKey) {
+        title.textContent = 'Click a zone to see player splits';
+        return;
+      }
+
+      const label = zoneLabels[zoneKey] || zoneKey;
+      const isAverageMode = gameKey === 'all' && getTeamShotMode() === 'averages';
+      const modeLabel = gameKey === 'all'
+        ? (isAverageMode ? 'All Games (Avg)' : 'All Games')
+        : 'Selected Game';
+      title.textContent = `${label} splits (${modeLabel})`;
+
+      let hasRows = false;
+      roster.forEach(player => {
+        const stats = getStatsFor(String(player.number), gameKey);
+        const zone = stats?.zones?.[zoneKey] || { make: 0, miss: 0 };
+        const divisor = isAverageMode ? getGamesPlayedForPlayer(player.number) : 1;
+        const factor = isAverageMode ? (divisor ? 1 / divisor : 0) : 1;
+        const makes = (zone.make || 0) * factor;
+        const attempts = ((zone.make || 0) + (zone.miss || 0)) * factor;
+        if (!attempts) {
+          return;
+        }
+        const pct = attempts ? `${((zone.make / (zone.make + zone.miss)) * 100).toFixed(1)}%` : '--%';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${player.name}</td>
+          <td>${formatShotValue(makes, isAverageMode)}-${formatShotValue(attempts, isAverageMode)}</td>
+          <td>${pct}</td>
+        `;
+        tbody.appendChild(row);
+        hasRows = true;
+      });
+
+      if (!hasRows) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td colspan="3">No attempts recorded.</td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
     function renderShotChartForPage(pageKey, gameKey) {
       const chartContainer = document.querySelector(`[data-role="shot-chart"][data-page="${pageKey}"]`);
       if (!chartContainer) {
         return;
       }
-      const stats = getStatsFor(pageKey, gameKey);
-      updateShotChart(chartContainer, stats);
+      const { stats, isAverage } = getShotChartStats(pageKey, gameKey);
+      updateShotChart(chartContainer, stats, { isAverage });
     }
 
     function getStatsFor(pageKey, gameKey) {
@@ -1197,6 +1459,52 @@
         return pageKey === 'team' ? state.overall.team : state.overall.players[pageKey];
       }
       return pageKey === 'team' ? game.team : game.players[pageKey];
+    }
+
+    function getShotChartStats(pageKey, gameKey) {
+      const baseStats = getStatsFor(pageKey, gameKey);
+      if (gameKey !== 'all') {
+        return { stats: baseStats, isAverage: false };
+      }
+
+      if (pageKey === 'team') {
+        const mode = getTeamShotMode();
+        if (mode !== 'averages') {
+          return { stats: baseStats, isAverage: false };
+        }
+
+        const gameCount = getGameCount();
+        if (!gameCount) {
+          return { stats: baseStats, isAverage: false };
+        }
+
+        return { stats: scaleShotChartStats(baseStats, 1 / gameCount), isAverage: true };
+      }
+
+      const mode = getPlayerShotMode(pageKey);
+      if (mode !== 'averages') {
+        return { stats: baseStats, isAverage: false };
+      }
+
+      const playerNumber = parseInt(pageKey, 10);
+      if (!Number.isFinite(playerNumber)) {
+        return { stats: baseStats, isAverage: false };
+      }
+      const gamesPlayed = getGamesPlayedForPlayer(playerNumber);
+      if (!gamesPlayed) {
+        return { stats: baseStats, isAverage: false };
+      }
+
+      return { stats: scaleShotChartStats(baseStats, 1 / gamesPlayed), isAverage: true };
+    }
+
+    function scaleShotChartStats(stats, factor) {
+      const scaled = createEmptyStats();
+      zoneKeys.forEach(zone => {
+        scaled.zones[zone].make = (stats.zones[zone]?.make || 0) * factor;
+        scaled.zones[zone].miss = (stats.zones[zone]?.miss || 0) * factor;
+      });
+      return scaled;
     }
 
     function buildStatHeaderHtml(firstLabel, includeDate, includeGp = false) {
@@ -1298,10 +1606,11 @@
       return safe.toFixed(1);
     }
 
-    function updateShotChart(container, stats) {
+    function updateShotChart(container, stats, options = {}) {
       if (!container) {
         return;
       }
+      const isAverage = options.isAverage === true;
 
       zoneKeys.forEach(zone => {
         const data = stats.zones[zone];
@@ -1315,9 +1624,16 @@
         }
         if (text) {
           const pctText = attempts ? `${Math.round(pct * 100)}%` : '--%';
-          text.textContent = `${data.make}/${attempts} (${pctText})`;
+          const makeText = formatShotValue(data.make, isAverage);
+          const attemptText = formatShotValue(attempts, isAverage);
+          text.textContent = `${makeText}/${attemptText} (${pctText})`;
         }
       });
+    }
+
+    function formatShotValue(value, isAverage) {
+      const safe = Number.isFinite(value) ? value : 0;
+      return isAverage ? safe.toFixed(1) : Math.round(safe).toString();
     }
 
     function hexToRgb(hex) {
