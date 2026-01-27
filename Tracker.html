@@ -152,6 +152,12 @@ button[data-stat] {
     font-size: 16px; /* Increase the font size for better readability */
     font-weight: bold; /* Keep the bold font for emphasis */
     border-radius: 8px; /* Optional: Adjust border-radius for a smoother look */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    padding: 6px;
 }
 button[data-action] {
     width: 120px; /* Increase the width to make the buttons bigger */
@@ -159,6 +165,34 @@ button[data-action] {
     font-size: 16px; /* Increase the font size for better readability */
     font-weight: bold; /* Keep the bold font for emphasis */
     border-radius: 8px; /* Optional: Adjust border-radius for a smoother look */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    padding: 6px;
+}
+button[data-putback] {
+    width: 120px;
+    height: 60px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    padding: 6px;
+}
+button[data-putback="Make"] {
+    background-color: #4CAF50;
+}
+button[data-putback="Miss"] {
+    background-color: #f44336;
 }
 button[data] {
     width: 120px; /* Increase the width to make the buttons bigger */
@@ -535,6 +569,8 @@ button[data-action="subOff"] {
         <h2>Select a Stat to Add</h2>
         <button data-stat="OffensiveRebound">Offensive Rebound</button>
         <button data-stat="DefensiveRebound">Defensive Rebound</button>
+        <button data-putback="Make">Made Putback</button>
+        <button data-putback="Miss">Missed Putback</button>
         <button data-stat="Turnover">Turnover</button>
         <button data-stat="Steal">Steal</button>
         <button data-stat="Block">Block</button>
@@ -550,6 +586,8 @@ button[data-action="subOff"] {
             <div class="semi-circle"></div> <!-- Added semi-circle element -->
             <button data-stat="OffensiveRebound">Offensive Rebound</button>
             <button data-stat="DefensiveRebound">Defensive Rebound</button>
+            <button data-putback="Make">Made Putback</button>
+            <button data-putback="Miss">Missed Putback</button>
             <button data-stat="Turnover">Turnover</button>
             <button data-stat="Steal">Steal</button>
             <button data-stat="Block">Block</button>
@@ -1045,6 +1083,31 @@ button[data-action="subOff"] {
     const playerStats = playerData[selectedPlayer].stats;
     const playerName = playerData[selectedPlayer].name;
     const playerNumber = selectedPlayer;
+
+    if (targetButton.dataset.putback) {
+        const shotTimestamp = formatGameTime(gameTime);
+        const shotStat = targetButton.dataset.putback === 'Make' ? 'AtRimMake' : 'AtRimMiss';
+
+        playerStats.OffensiveRebound += 1;
+        history.push({ player: selectedPlayer, stat: 'OffensiveRebound', amount: 1 });
+        document.getElementById(`offensiverebound${selectedPlayer}`).innerText = playerStats.OffensiveRebound;
+        updateTeamTotals('OffensiveRebound');
+        logAction(`${playerNumber} ${playerName} grabbed an offensive rebound`, shotTimestamp);
+
+        playerStats[shotStat] += 1;
+        history.push({ player: selectedPlayer, stat: shotStat, amount: 1 });
+        document.getElementById(`${shotStat.toLowerCase()}${selectedPlayer}`).innerText = playerStats[shotStat];
+        updateTeamTotals(shotStat);
+        calculatePoints(selectedPlayer);
+
+        if (shotStat === 'AtRimMake') {
+            logAction(`${playerNumber} ${playerName} made a 2-pointer from at rim`, shotTimestamp);
+        } else {
+            logAction(`${playerNumber} ${playerName} missed a 2-pointer from at rim`, shotTimestamp);
+        }
+
+        return;
+    }
 
     if (targetButton.dataset.stat) {
         const stat = targetButton.dataset.stat;
