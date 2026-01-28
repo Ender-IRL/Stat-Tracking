@@ -2078,6 +2078,20 @@
       redMarker.appendChild(redArrow);
       defs.appendChild(redMarker);
 
+      const grayMarker = document.createElementNS(svgNS, 'marker');
+      grayMarker.setAttribute('id', 'nerd-arrow-gray');
+      grayMarker.setAttribute('markerWidth', '8');
+      grayMarker.setAttribute('markerHeight', '8');
+      grayMarker.setAttribute('refX', '6');
+      grayMarker.setAttribute('refY', '3');
+      grayMarker.setAttribute('orient', 'auto');
+      grayMarker.setAttribute('markerUnits', 'strokeWidth');
+      const grayArrow = document.createElementNS(svgNS, 'path');
+      grayArrow.setAttribute('d', 'M0,0 L6,3 L0,6 Z');
+      grayArrow.setAttribute('fill', '#94a3b8');
+      grayMarker.appendChild(grayArrow);
+      defs.appendChild(grayMarker);
+
       svg.appendChild(defs);
 
       const pairMap = new Map();
@@ -2218,13 +2232,7 @@
         }
 
         edge.style.stroke = '#94a3b8';
-        if (edge.dataset.color === 'green') {
-          edge.setAttribute('marker-end', 'url(#nerd-arrow-green)');
-        } else if (edge.dataset.color === 'blue') {
-          edge.setAttribute('marker-end', 'url(#nerd-arrow-blue)');
-        } else {
-          edge.removeAttribute('marker-end');
-        }
+        edge.setAttribute('marker-end', 'url(#nerd-arrow-gray)');
       });
       const nodes = svg.querySelectorAll('.nerd-node');
       nodes.forEach(node => {
