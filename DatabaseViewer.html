@@ -379,31 +379,32 @@
   </style>
 </head>
 <body>
-  <header>
+  <header id="pageHeader">
     <h1>Basketball Game Log Database</h1>
     <p>Upload a folder of CAMT.csv exports to summarize stats for the team and each player.</p>
   </header>
 
-  <div class="upload-panel">
+  <div class="upload-panel" id="uploadPanel">
     <div class="upload-row">
       <input type="file" id="folderInput" webkitdirectory multiple />
       <span id="uploadStatus">No files loaded.</span>
     </div>
-    <p>Roster locked to #1 Mike, #2 Stanley, #3 Ryan, #4 Jim, #5 Dwight. Player IDs are matched by name or the last two digits.</p>
+    <p>Include a Roster.csv in the uploaded folder to set player numbers/names. Player IDs are matched by name or the last two digits.</p>
   </div>
 
-  <div class="tabs" id="pageTabs"></div>
+  <div class="tabs hidden" id="pageTabs"></div>
 
-  <main id="pages"></main>
+  <main id="pages" class="hidden"></main>
 
   <script>
-    const roster = [
+    const defaultRoster = [
       { number: 1, name: 'Mike' },
       { number: 2, name: 'Stanley' },
       { number: 3, name: 'Ryan' },
       { number: 4, name: 'Jim' },
       { number: 5, name: 'Dwight' }
     ];
+    let roster = defaultRoster.slice();
 
     const zoneKeys = [
       'LeftCorner',
@@ -483,16 +484,33 @@
     const pageTabs = document.getElementById('pageTabs');
     const pagesContainer = document.getElementById('pages');
 
-    initPages();
-
     document.getElementById('folderInput').addEventListener('change', async (event) => {
-      const files = Array.from(event.target.files || []).filter(file => file.name.toLowerCase().endsWith('.csv'));
+      const allFiles = Array.from(event.target.files || []);
+      const rosterFile = allFiles.find(file => file.name.toLowerCase() === 'roster.csv');
+      const files = allFiles.filter(file => file.name.toLowerCase().endsWith('.csv') && file !== rosterFile);
+      if (!rosterFile) {
+        setLoadedState(false);
+        document.getElementById('uploadStatus').textContent = 'Roster.csv is required. Add it to the folder before uploading.';
+        return;
+      }
       if (!files.length) {
+        setLoadedState(false);
         document.getElementById('uploadStatus').textContent = 'No CSV files found in that folder.';
         return;
       }
 
       document.getElementById('uploadStatus').textContent = `Loading ${files.length} file(s)...`;
+      const rosterText = await rosterFile.text();
+      const parsedRoster = parseRosterCsv(rosterText);
+      if (!parsedRoster.length) {
+        roster = [];
+        rebuildPages();
+        setLoadedState(false);
+        document.getElementById('uploadStatus').textContent = 'Roster.csv is required and must include Number,Name columns with valid rows.';
+        return;
+      }
+      roster = parsedRoster;
+      rebuildPages();
       resetState();
 
       const parsedFiles = await Promise.all(files.map(file => parseCsvFile(file)));
@@ -504,12 +522,14 @@
 
       buildOverallTotals();
       renderAll();
-      document.getElementById('uploadStatus').textContent = `Loaded ${Object.keys(state.games).length} game(s).`;
+      const rosterSummary = roster.map(player => `#${player.number} ${player.name}`).join(', ');
+      document.getElementById('uploadStatus').textContent = `Loaded ${Object.keys(state.games).length} game(s). Roster: ${rosterSummary}`;
+      setLoadedState(true);
     });
 
     function initPages() {
       const pages = [{ key: 'team', label: 'Team' }].concat(
-        roster.map(player => ({ key: String(player.number), label: `${player.name}` }))
+        roster.map(player => ({ key: String(player.number), label: `#${player.number} ${player.name}` }))
       );
 
       pages.forEach((page, index) => {
@@ -526,16 +546,121 @@
         pagesContainer.appendChild(section);
       });
 
-      pageTabs.addEventListener('click', (event) => {
-        const target = event.target.closest('button[data-page]');
-        if (!target) {
+      if (!pageTabs.dataset.bound) {
+        pageTabs.addEventListener('click', (event) => {
+          const target = event.target.closest('button[data-page]');
+          if (!target) {
+            return;
+          }
+          const pageKey = target.dataset.page;
+          pageTabs.querySelectorAll('button').forEach(btn => btn.classList.toggle('active', btn === target));
+          pagesContainer.querySelectorAll('.page').forEach(page => page.classList.toggle('active', page.dataset.page === pageKey));
+        });
+        pageTabs.dataset.bound = 'true';
+      }
+    }
+
+    function rebuildPages() {
+      pageTabs.innerHTML = '';
+      pagesContainer.innerHTML = '';
+      initPages();
+    }
+
+    function setLoadedState(isLoaded) {
+      const tabs = document.getElementById('pageTabs');
+      const pages = document.getElementById('pages');
+      const uploadPanel = document.getElementById('uploadPanel');
+      const header = document.getElementById('pageHeader');
+      if (tabs) {
+        tabs.classList.toggle('hidden', !isLoaded);
+      }
+      if (pages) {
+        pages.classList.toggle('hidden', !isLoaded);
+      }
+      if (uploadPanel) {
+        uploadPanel.classList.toggle('hidden', isLoaded);
+        uploadPanel.style.display = isLoaded ? 'none' : '';
+      }
+      if (header) {
+        header.classList.toggle('hidden', isLoaded);
+        header.style.display = isLoaded ? 'none' : '';
+      }
+    }
+
+    setLoadedState(false);
+
+    function parseRosterCsv(text) {
+      const rows = parseCsv(text);
+      if (!rows.length) {
+        return [];
+      }
+      const header = rows[0].map(value => value.trim().toLowerCase());
+      const numberIndex = header.indexOf('number');
+      const nameIndex = header.indexOf('name');
+      if (numberIndex === -1 || nameIndex === -1) {
+        return [];
+      }
+      const parsed = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) {
+          continue;
+        }
+        const rawNumber = row[numberIndex];
+        const rawName = row[nameIndex];
+        const number = Number.parseInt(String(rawNumber || '').trim(), 10);
+        const name = String(rawName || '').trim();
+        if (!Number.isFinite(number) || !name) {
+          continue;
+        }
+        parsed.push({ number, name });
+      }
+      return parsed;
+    }
+
+    function deriveAssistedMakes(entries) {
+      const makesByTime = new Map();
+      const assistsByTime = new Map();
+
+      entries.forEach(entry => {
+        const match = String(entry || '').match(/^(\d+:\d{2})\s+(\d+)\s+(.*)$/);
+        if (!match) {
           return;
         }
-        const pageKey = target.dataset.page;
-        pageTabs.querySelectorAll('button').forEach(btn => btn.classList.toggle('active', btn === target));
-        pagesContainer.querySelectorAll('.page').forEach(page => page.classList.toggle('active', page.dataset.page === pageKey));
+        const time = match[1];
+        const playerNumber = Number.parseInt(match[2], 10);
+        if (!Number.isFinite(playerNumber)) {
+          return;
+        }
+        const message = match[3].toLowerCase();
+
+        if (message.includes('made a 2-pointer') || message.includes('made a 3-pointer')) {
+          if (!makesByTime.has(time)) {
+            makesByTime.set(time, []);
+          }
+          makesByTime.get(time).push(playerNumber);
+          return;
+        }
+
+        if (message.includes('had an assist')) {
+          assistsByTime.set(time, (assistsByTime.get(time) || 0) + 1);
+        }
       });
+
+      const assistedByPlayer = {};
+      makesByTime.forEach((makers, time) => {
+        const assistCount = assistsByTime.get(time) || 0;
+        makers.forEach((playerNumber, index) => {
+          if (index < assistCount) {
+            assistedByPlayer[playerNumber] = (assistedByPlayer[playerNumber] || 0) + 1;
+          }
+        });
+      });
+
+      return assistedByPlayer;
     }
+
+    // Pages are created after a successful upload.
 
     function buildPageHtml(page) {
       if (page.key === 'team') {
@@ -596,6 +721,7 @@
               <table data-role="zone-breakdown-table">
                 <thead>
                   <tr>
+                    <th>No.</th>
                     <th>Player</th>
                     <th>FG</th>
                     <th>FG%</th>
@@ -643,9 +769,19 @@
         </div>
         <div class="game-log">
           <div class="section-header">
-            <h3>Season Log</h3>
+            <h3>Standard</h3>
           </div>
           <table data-role="player-log" data-page="${page.key}">
+            <thead></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <div class="game-log">
+          <div class="section-header">
+            <h3>Advanced</h3>
+          </div>
+          <table data-role="player-advanced" data-page="${page.key}">
             <thead></thead>
             <tbody></tbody>
             <tfoot></tfoot>
@@ -831,15 +967,22 @@
           addStats(teamStats, gamePlayers[player.number]);
         });
       }
+      const summedTeamMinutes = Object.values(gamePlayers).reduce((total, player) => {
+        return total + (player?.minutesSeconds || 0);
+      }, 0);
+      teamStats.minutesSeconds = summedTeamMinutes;
 
       const gameKey = file.name;
+      const assistedMakesByPlayer = deriveAssistedMakes(actionLog);
+
       const game = {
         key: gameKey,
         id: gameId || file.name.replace(/\.csv$/i, ''),
         date: gameDate || 'Unknown',
         team: teamStats,
         players: gamePlayers,
-        actionLog
+        actionLog,
+        assistedMakesByPlayer
       };
 
       return { key: gameKey, game };
@@ -906,7 +1049,15 @@
       if (!value) {
         return 0;
       }
-      const parts = String(value).trim().split(':').map(part => parseInt(part, 10));
+      const trimmed = String(value).trim();
+      if (!trimmed.includes(':')) {
+        const numericMinutes = Number.parseFloat(trimmed);
+        if (Number.isFinite(numericMinutes)) {
+          return Math.round(numericMinutes * 60);
+        }
+        return 0;
+      }
+      const parts = trimmed.split(':').map(part => parseInt(part, 10));
       if (parts.some(part => Number.isNaN(part))) {
         return 0;
       }
@@ -1030,20 +1181,32 @@
     const statHeaderHtml = `
       <th>MIN</th>
       <th>PTS</th>
+      <th>FG</th>
+      <th>FG%</th>
+      <th>3PT</th>
+      <th>3PT%</th>
+      <th>FT</th>
+      <th>FT%</th>
       <th>OREB</th>
       <th>DREB</th>
       <th>REB</th>
       <th>AST</th>
-      <th>POT AST</th>
       <th>STL</th>
       <th>BLK</th>
-      <th>BLK AG</th>
       <th>TO</th>
       <th>PF</th>
-      <th>FC</th>
-      <th>FG</th>
-      <th>3PT</th>
-      <th>FT</th>
+    `;
+
+    const advancedHeaderHtml = `
+      <th>POT AST</th>
+      <th>BLK AG</th>
+      <th>FOULS DRAWN</th>
+      <th>FG AST%</th>
+      <th>eFG%</th>
+      <th>TS%</th>
+      <th>GMSC</th>
+      <th>AST%</th>
+      <th>USG%</th>
     `;
 
     function renderAll() {
@@ -1095,6 +1258,7 @@
       }
 
       renderPlayerTables();
+      renderPlayerAdvancedTables();
       renderTeamTable();
       renderTeamBoxScore();
       renderAllShotCharts();
@@ -1168,6 +1332,23 @@
       return count;
     }
 
+    function getPlayerAggregates(playerNumber) {
+      const playerTotals = createEmptyStats();
+      const teamTotals = createEmptyStats();
+      let gamesPlayed = 0;
+      let assistedMakes = 0;
+      getSortedGames().forEach(game => {
+        const stats = game.players[playerNumber];
+        if (stats && stats.minutesSeconds > 0) {
+          gamesPlayed += 1;
+          addStats(playerTotals, stats);
+          addStats(teamTotals, game.team);
+          assistedMakes += game.assistedMakesByPlayer?.[playerNumber] || 0;
+        }
+      });
+      return { player: playerTotals, team: teamTotals, gamesPlayed, assistedMakes };
+    }
+
     function buildGameOptions(games, includeAll = true) {
       const options = [];
       if (includeAll) {
@@ -1237,6 +1418,41 @@
       });
     }
 
+    function renderPlayerAdvancedTables() {
+      const games = getSortedGames();
+
+      roster.forEach(player => {
+        const table = document.querySelector(`[data-role="player-advanced"][data-page="${player.number}"]`);
+        if (!table) {
+          return;
+        }
+
+        const aggregates = getPlayerAggregates(player.number);
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+        const tfoot = table.querySelector('tfoot');
+
+        thead.innerHTML = buildAdvancedHeaderHtml('Game', true);
+        tbody.innerHTML = '';
+        tfoot.innerHTML = '';
+
+        games.forEach(game => {
+          const stats = game.players[player.number] || createEmptyStats();
+          const assistedMakes = game.assistedMakesByPlayer?.[player.number] || 0;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${game.id}</td>
+            <td>${game.date}</td>
+            ${buildAdvancedCells(stats, game.team, { isAverage: false, averageDivisor: 0, assistedMakes })}
+          `;
+          tbody.appendChild(row);
+        });
+
+        tfoot.appendChild(buildAdvancedFooterRow('Totals', aggregates.player, aggregates.team, true, false, 0, aggregates.assistedMakes));
+        tfoot.appendChild(buildAdvancedFooterRow('Averages', aggregates.player, aggregates.team, true, true, aggregates.gamesPlayed, aggregates.assistedMakes));
+      });
+    }
+
     function renderTeamTable() {
       const table = document.querySelector('[data-role="team-table"]');
       const title = document.querySelector('[data-role="team-table-title"]');
@@ -1275,13 +1491,14 @@
       } else {
         const isAverageView = view === 'averages';
         title.textContent = isAverageView ? 'Player Averages' : 'Player Totals';
-        thead.innerHTML = buildStatHeaderHtml('Player', false, true);
+        thead.innerHTML = buildStatHeaderHtml('Player', false, true, true, true);
 
         roster.forEach(player => {
           const stats = state.overall.players[player.number];
           const gamesPlayed = getGamesPlayedForPlayer(player.number);
           const row = document.createElement('tr');
           row.innerHTML = `
+            <td>${player.number}</td>
             <td>${player.name}</td>
             <td>${gamesPlayed}</td>
             ${buildStatCells(stats, { isAverage: isAverageView, averageDivisor: isAverageView ? gamesPlayed : 0 })}
@@ -1290,7 +1507,7 @@
         });
 
         const teamLabel = isAverageView ? 'Team Averages' : 'Team Totals';
-        tfoot.appendChild(buildFooterRowWithGp(teamLabel, gameCount, state.overall.team, isAverageView, isAverageView ? gameCount : 0));
+        tfoot.appendChild(buildFooterRowWithGp(teamLabel, gameCount, state.overall.team, isAverageView, isAverageView ? gameCount : 0, true, true));
       }
     }
 
@@ -1306,7 +1523,7 @@
       const tbody = table.querySelector('tbody');
       const tfoot = table.querySelector('tfoot');
 
-      thead.innerHTML = buildStatHeaderHtml('Player', false);
+      thead.innerHTML = buildStatHeaderHtml('Player', false, false, true, true);
       tbody.innerHTML = '';
       tfoot.innerHTML = '';
 
@@ -1323,13 +1540,14 @@
         const stats = game.players[player.number] || createEmptyStats();
         const row = document.createElement('tr');
         row.innerHTML = `
+          <td>${player.number}</td>
           <td>${player.name}</td>
           ${buildStatCells(stats, { isAverage: false })}
         `;
         tbody.appendChild(row);
       });
 
-      tfoot.appendChild(buildFooterRow('Team Totals', game.team, false, false));
+      tfoot.appendChild(buildFooterRowWithNumber('Team Totals', game.team, false, false));
       renderTeamActionLog(game);
     }
 
@@ -1423,6 +1641,7 @@
 
         const row = document.createElement('tr');
         row.innerHTML = `
+          <td>${player.number}</td>
           <td>${player.name}</td>
           <td>${formatShotValue(makes, isAverageMode)}-${formatShotValue(attempts, isAverageMode)}</td>
           <td>${pct}</td>
@@ -1434,7 +1653,7 @@
       if (!hasRows) {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td colspan="3">No attempts recorded.</td>
+          <td colspan="4">No attempts recorded.</td>
         `;
         tbody.appendChild(row);
       }
@@ -1507,15 +1726,29 @@
       return scaled;
     }
 
-    function buildStatHeaderHtml(firstLabel, includeDate, includeGp = false) {
+    function buildStatHeaderHtml(firstLabel, includeDate, includeGp = false, includeNumber = false, numberFirst = false) {
       const dateHeader = includeDate ? '<th>Date</th>' : '';
       const gpHeader = includeGp ? '<th>GP</th>' : '';
+      const labelCells = includeNumber && numberFirst
+        ? `<th>No.</th><th>${firstLabel}</th>`
+        : `<th>${firstLabel}</th>${includeNumber ? '<th>No.</th>' : ''}`;
+      return `
+        <tr>
+          ${labelCells}
+          ${dateHeader}
+          ${gpHeader}
+          ${statHeaderHtml}
+        </tr>
+      `;
+    }
+
+    function buildAdvancedHeaderHtml(firstLabel, includeDate) {
+      const dateHeader = includeDate ? '<th>Date</th>' : '';
       return `
         <tr>
           <th>${firstLabel}</th>
           ${dateHeader}
-          ${gpHeader}
-          ${statHeaderHtml}
+          ${advancedHeaderHtml}
         </tr>
       `;
     }
@@ -1531,13 +1764,10 @@
       const defReb = stats.defReb * factor;
       const reb = (stats.offReb + stats.defReb) * factor;
       const ast = stats.ast * factor;
-      const potAst = stats.potAst * factor;
       const stl = stats.stl * factor;
       const blk = stats.blk * factor;
-      const blkAgainst = stats.blkAgainst * factor;
       const tov = stats.tov * factor;
       const foulCommitted = stats.foulCommitted * factor;
-      const foulCalled = stats.foulCalled * factor;
       const points = derived.points * factor;
 
       const fgMakes = derived.fgMakes * factor;
@@ -1550,21 +1780,116 @@
       return `
         <td>${formatDuration(minutes)}</td>
         <td>${formatNumber(points, isAverage)}</td>
+        <td>${formatMakeAttempts(fgMakes, fgAttempts, isAverage)}</td>
+        <td>${formatPercentValue(fgMakes, fgAttempts)}</td>
+        <td>${formatMakeAttempts(threeMakes, threeAttempts, isAverage)}</td>
+        <td>${formatPercentValue(threeMakes, threeAttempts)}</td>
+        <td>${formatMakeAttempts(ftMakes, ftAttempts, isAverage)}</td>
+        <td>${formatPercentValue(ftMakes, ftAttempts)}</td>
         <td>${formatNumber(offReb, isAverage)}</td>
         <td>${formatNumber(defReb, isAverage)}</td>
         <td>${formatNumber(reb, isAverage)}</td>
         <td>${formatNumber(ast, isAverage)}</td>
-        <td>${formatNumber(potAst, isAverage)}</td>
         <td>${formatNumber(stl, isAverage)}</td>
         <td>${formatNumber(blk, isAverage)}</td>
-        <td>${formatNumber(blkAgainst, isAverage)}</td>
         <td>${formatNumber(tov, isAverage)}</td>
         <td>${formatNumber(foulCommitted, isAverage)}</td>
-        <td>${formatNumber(foulCalled, isAverage)}</td>
-        <td>${formatMakeAttempts(fgMakes, fgAttempts, isAverage)}</td>
-        <td>${formatMakeAttempts(threeMakes, threeAttempts, isAverage)}</td>
-        <td>${formatMakeAttempts(ftMakes, ftAttempts, isAverage)}</td>
       `;
+    }
+
+    function buildAdvancedCells(stats, teamStats, options) {
+      const isAverage = options.isAverage;
+      const divisor = options.averageDivisor || 0;
+      const factor = isAverage ? (divisor ? 1 / divisor : 0) : 1;
+      const assistedMakes = (options.assistedMakes || 0) * factor;
+      const derived = buildDerived(stats);
+      const teamDerived = buildDerived(teamStats || createEmptyStats());
+
+      const minutes = stats.minutesSeconds * factor;
+      const ast = stats.ast * factor;
+      const potAst = stats.potAst * factor;
+      const stl = stats.stl * factor;
+      const blk = stats.blk * factor;
+      const blkAgainst = stats.blkAgainst * factor;
+      const tov = stats.tov * factor;
+      const foulCommitted = stats.foulCommitted * factor;
+      const foulDrawn = stats.foulCalled * factor;
+      const points = derived.points * factor;
+
+      const fgMakes = derived.fgMakes * factor;
+      const fgAttempts = derived.fgAttempts * factor;
+      const threeMakes = derived.threeMakes * factor;
+      const ftMakes = derived.ftMakes * factor;
+      const ftAttempts = derived.ftAttempts * factor;
+
+      const fgAstPct = fgMakes ? (assistedMakes / fgMakes) * 100 : null;
+      const efg = fgAttempts ? (fgMakes + 0.5 * threeMakes) / fgAttempts : null;
+      const tsDenom = (2 * fgAttempts) + (0.44 * ftAttempts);
+      const ts = tsDenom ? points / tsDenom : null;
+      const gmsc = points
+        + 0.4 * fgMakes
+        - 0.7 * fgAttempts
+        - 0.4 * (ftAttempts - ftMakes)
+        + 0.7 * (stats.offReb * factor)
+        + 0.3 * (stats.defReb * factor)
+        + stl
+        + 0.7 * ast
+        + 0.7 * blk
+        - 0.4 * foulCommitted
+        - tov;
+
+      const teamMinutes = (teamStats?.minutesSeconds || 0) * factor / 60;
+      const playerMinutes = minutes / 60;
+      const teamFg = teamDerived.fgMakes * factor;
+      let astPct = null;
+      if (teamMinutes > 0 && teamFg > 0 && playerMinutes > 0) {
+        const denom = ((playerMinutes / (teamMinutes / 5)) * teamFg) - fgMakes;
+        if (denom > 0) {
+          astPct = (ast / denom) * 100;
+        }
+      }
+
+      let usgPct = null;
+      const teamFga = teamDerived.fgAttempts * factor;
+      const teamFta = teamDerived.ftAttempts * factor;
+      const teamTov = (teamStats?.tov || 0) * factor;
+      const playerFga = fgAttempts;
+      const playerFta = ftAttempts;
+      const playerTov = tov;
+      if (playerMinutes > 0 && teamMinutes > 0) {
+        const denom = playerMinutes * (teamFga + 0.44 * teamFta + teamTov);
+        if (denom > 0) {
+          usgPct = 100 * ((playerFga + 0.44 * playerFta + playerTov) * (teamMinutes / 5)) / denom;
+        }
+      }
+
+      return `
+        <td>${formatNumber(potAst, isAverage)}</td>
+        <td>${formatNumber(blkAgainst, isAverage)}</td>
+        <td>${formatNumber(foulDrawn, isAverage)}</td>
+        <td>${formatRate(fgAstPct, true)}</td>
+        <td>${formatRate(efg)}</td>
+        <td>${formatRate(ts)}</td>
+        <td>${formatNumber(gmsc, true)}</td>
+        <td>${formatRate(astPct, true)}</td>
+        <td>${formatRate(usgPct, true)}</td>
+      `;
+    }
+
+    function buildAdvancedFooterRow(label, stats, teamStats, includeDate, isAverage, averageDivisor = 0, assistedMakes = 0) {
+      const row = document.createElement('tr');
+      row.className = isAverage ? 'averages-row' : 'totals-row';
+      const leadCells = includeDate ? `<td>${label}</td><td></td>` : `<td>${label}</td>`;
+      row.innerHTML = `${leadCells}${buildAdvancedCells(stats, teamStats, { isAverage, averageDivisor, assistedMakes })}`;
+      return row;
+    }
+
+    function formatRate(value, alreadyPercent = false) {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return '--%';
+      }
+      const scaled = alreadyPercent ? value : value * 100;
+      return `${scaled.toFixed(1)}%`;
     }
 
     function buildFooterRow(label, stats, includeDate, isAverage, averageDivisor = 0) {
@@ -1575,12 +1900,31 @@
       return row;
     }
 
-    function buildFooterRowWithGp(label, gpValue, stats, isAverage, averageDivisor = 0) {
+    function buildFooterRowWithGp(label, gpValue, stats, isAverage, averageDivisor = 0, includeNumber = false, numberFirst = false) {
       const row = document.createElement('tr');
       row.className = isAverage ? 'averages-row' : 'totals-row';
+      const numberCell = includeNumber ? '<td></td>' : '';
+      const leadingCells = numberFirst
+        ? `${numberCell}<td>${label}</td>`
+        : `<td>${label}</td>${numberCell}`;
       row.innerHTML = `
-        <td>${label}</td>
+        ${leadingCells}
         <td>${gpValue ?? ''}</td>
+        ${buildStatCells(stats, { isAverage, averageDivisor })}
+      `;
+      return row;
+    }
+
+    function buildFooterRowWithNumber(label, stats, includeDate, isAverage, averageDivisor = 0, numberFirst = true) {
+      const row = document.createElement('tr');
+      row.className = isAverage ? 'averages-row' : 'totals-row';
+      const numberCell = '<td></td>';
+      const labelCell = `<td>${label}</td>`;
+      const dateCell = includeDate ? '<td></td>' : '';
+      const leadingCells = numberFirst ? `${numberCell}${labelCell}` : `${labelCell}${numberCell}`;
+      row.innerHTML = `
+        ${leadingCells}
+        ${dateCell}
         ${buildStatCells(stats, { isAverage, averageDivisor })}
       `;
       return row;
@@ -1599,6 +1943,13 @@
         return `${formatDecimal(makes)}-${formatDecimal(attempts)}`;
       }
       return `${Math.round(makes)}-${Math.round(attempts)}`;
+    }
+
+    function formatPercentValue(makes, attempts) {
+      if (!attempts) {
+        return '--%';
+      }
+      return `${((makes / attempts) * 100).toFixed(1)}%`;
     }
 
     function formatDecimal(value) {
