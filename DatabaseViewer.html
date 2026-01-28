@@ -367,6 +367,134 @@
       text-align: left;
     }
 
+    .nerdzone {
+      margin-top: 12px;
+    }
+
+    .nerdzone-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nerdzone-graph {
+      margin-top: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .nerdzone-graph svg {
+      width: 100%;
+      height: 320px;
+      display: block;
+    }
+
+    .nerdzone-empty {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nerdzone-layout {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .nerdzone-breakdown {
+      flex: 0 0 260px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 12px;
+    }
+
+    .nerdzone-breakdown h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .nerdzone-breakdown table {
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    .nerd-node text {
+      font-size: 11px;
+      font-weight: 700;
+      fill: #0f172a;
+      cursor: pointer;
+    }
+
+    .nerd-node circle {
+      fill: #f8fafc;
+      stroke: #0f172a;
+      stroke-width: 1.5;
+    }
+
+    .nerd-edge {
+      stroke: #64748b;
+      stroke-linecap: round;
+      fill: none;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .nerd-node.active circle {
+      fill: #e2e8f0;
+    }
+
+    .nerd-node.active text {
+      fill: #1d4ed8;
+    }
+
+    details.glossary {
+      margin-top: 16px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 10px 12px;
+    }
+
+    details.glossary summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--ink);
+      list-style: none;
+    }
+
+    details.glossary summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .glossary-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px 14px;
+    }
+
+    .glossary-item h4 {
+      margin: 0 0 4px 0;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+    }
+
+    .glossary-item p {
+      margin: 0 0 4px 0;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
     @media (max-width: 720px) {
       header, main {
         padding: 16px;
@@ -475,6 +603,10 @@
       games: {},
       teamShotMode: 'totals',
       selectedTeamZone: null,
+      nerdHover: null,
+      nerdSelection: 'all-total',
+      nerdMatrix: {},
+      nerdIsAverage: false,
       overall: {
         team: createEmptyStats(),
         players: createRosterStats()
@@ -528,7 +660,7 @@
     });
 
     function initPages() {
-      const pages = [{ key: 'team', label: 'Team' }].concat(
+      const pages = [{ key: 'team', label: 'Team' }, { key: 'nerd', label: 'NerdZone' }].concat(
         roster.map(player => ({ key: String(player.number), label: `#${player.number} ${player.name}` }))
       );
 
@@ -618,32 +750,48 @@
       return parsed;
     }
 
+    function isRosterNumber(playerNumber) {
+      return roster.some(player => player.number === playerNumber);
+    }
+
+    function parseActionEntry(entry) {
+      const match = String(entry || '').match(/^(\d+:\d{2})\s+(\d+)\s+(.*)$/);
+      if (!match) {
+        return null;
+      }
+      const time = match[1];
+      const playerNumber = Number.parseInt(match[2], 10);
+      if (!Number.isFinite(playerNumber)) {
+        return null;
+      }
+      return {
+        time,
+        playerNumber,
+        message: match[3] || ''
+      };
+    }
+
     function deriveAssistedMakes(entries) {
       const makesByTime = new Map();
       const assistsByTime = new Map();
 
       entries.forEach(entry => {
-        const match = String(entry || '').match(/^(\d+:\d{2})\s+(\d+)\s+(.*)$/);
-        if (!match) {
+        const parsed = parseActionEntry(entry);
+        if (!parsed || !isRosterNumber(parsed.playerNumber)) {
           return;
         }
-        const time = match[1];
-        const playerNumber = Number.parseInt(match[2], 10);
-        if (!Number.isFinite(playerNumber)) {
-          return;
-        }
-        const message = match[3].toLowerCase();
+        const message = parsed.message.toLowerCase();
 
         if (message.includes('made a 2-pointer') || message.includes('made a 3-pointer')) {
-          if (!makesByTime.has(time)) {
-            makesByTime.set(time, []);
+          if (!makesByTime.has(parsed.time)) {
+            makesByTime.set(parsed.time, []);
           }
-          makesByTime.get(time).push(playerNumber);
+          makesByTime.get(parsed.time).push(parsed.playerNumber);
           return;
         }
 
         if (message.includes('had an assist')) {
-          assistsByTime.set(time, (assistsByTime.get(time) || 0) + 1);
+          assistsByTime.set(parsed.time, (assistsByTime.get(parsed.time) || 0) + 1);
         }
       });
 
@@ -660,9 +808,84 @@
       return assistedByPlayer;
     }
 
+    function deriveAssistPairs(entries) {
+      const makesByTime = new Map();
+      const pairs = {};
+
+      entries.forEach(entry => {
+        const parsed = parseActionEntry(entry);
+        if (!parsed || !isRosterNumber(parsed.playerNumber)) {
+          return;
+        }
+        const message = parsed.message.toLowerCase();
+
+        if (message.includes('made a 2-pointer') || message.includes('made a 3-pointer')) {
+          if (!makesByTime.has(parsed.time)) {
+            makesByTime.set(parsed.time, []);
+          }
+          makesByTime.get(parsed.time).push(parsed.playerNumber);
+          return;
+        }
+
+        if (message.includes('had an assist')) {
+          const queue = makesByTime.get(parsed.time);
+          if (!queue || !queue.length) {
+            return;
+          }
+          const scorer = queue.shift();
+          if (!isRosterNumber(scorer)) {
+            return;
+          }
+          if (!pairs[parsed.playerNumber]) {
+            pairs[parsed.playerNumber] = {};
+          }
+          pairs[parsed.playerNumber][scorer] = (pairs[parsed.playerNumber][scorer] || 0) + 1;
+        }
+      });
+
+      return pairs;
+    }
+
     // Pages are created after a successful upload.
 
     function buildPageHtml(page) {
+      if (page.key === 'nerd') {
+        return `
+          <div class="page-header">
+            <h2>NerdZone</h2>
+          </div>
+          <div class="nerdzone">
+            <div class="section-header">
+              <h3>Assist Network</h3>
+              <div class="nerdzone-controls">
+                <label for="nerdFilter">View</label>
+                <select id="nerdFilter" data-role="nerd-filter"></select>
+                <span>Green = assists given, Blue = assists received.</span>
+              </div>
+            </div>
+            <div class="nerdzone-layout">
+              <div class="nerdzone-graph">
+                <svg viewBox="0 0 600 320" data-role="nerdzone-svg" aria-label="Assist network" role="img" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="nerdzone-empty hidden" data-role="nerdzone-empty">No assist connections yet.</div>
+              </div>
+              <div class="nerdzone-breakdown">
+                <h4 data-role="nerd-breakdown-title">Hover a player to see assist breakdown</h4>
+                <table data-role="nerd-breakdown-table">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Given</th>
+                      <th>Received</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       if (page.key === 'team') {
         return `
           <div class="page-header">
@@ -686,6 +909,7 @@
               <tfoot></tfoot>
             </table>
           </div>
+          ${glossaryHtml}
           <div class="chart-section">
             <div class="section-header">
               <h3>Shot Chart</h3>
@@ -723,7 +947,8 @@
                   <tr>
                     <th>No.</th>
                     <th>Player</th>
-                    <th>FG</th>
+                    <th>FGM</th>
+                    <th>FGA</th>
                     <th>FG%</th>
                   </tr>
                 </thead>
@@ -787,6 +1012,7 @@
             <tfoot></tfoot>
           </table>
         </div>
+        ${glossaryHtml}
         <div class="chart-section">
           <div class="section-header">
             <h3>Shot Chart</h3>
@@ -861,6 +1087,10 @@
       state.games = {};
       state.teamShotMode = 'totals';
       state.selectedTeamZone = null;
+      state.nerdHover = null;
+      state.nerdSelection = 'all-total';
+      state.nerdMatrix = {};
+      state.nerdIsAverage = false;
       state.overall.team = createEmptyStats();
       state.overall.players = createRosterStats();
     }
@@ -974,6 +1204,7 @@
 
       const gameKey = file.name;
       const assistedMakesByPlayer = deriveAssistedMakes(actionLog);
+      const assistPairs = deriveAssistPairs(actionLog);
 
       const game = {
         key: gameKey,
@@ -982,7 +1213,8 @@
         team: teamStats,
         players: gamePlayers,
         actionLog,
-        assistedMakesByPlayer
+        assistedMakesByPlayer,
+        assistPairs
       };
 
       return { key: gameKey, game };
@@ -1181,11 +1413,14 @@
     const statHeaderHtml = `
       <th>MIN</th>
       <th>PTS</th>
-      <th>FG</th>
+      <th>FGM</th>
+      <th>FGA</th>
       <th>FG%</th>
-      <th>3PT</th>
+      <th>3PM</th>
+      <th>3PA</th>
       <th>3PT%</th>
-      <th>FT</th>
+      <th>FTM</th>
+      <th>FTA</th>
       <th>FT%</th>
       <th>OREB</th>
       <th>DREB</th>
@@ -1209,10 +1444,106 @@
       <th>GMSC</th>
     `;
 
+    const glossaryHtml = `
+      <details class="glossary">
+        <summary>Glossary & Formulas</summary>
+        <div class="glossary-grid">
+          <div class="glossary-item">
+            <h4>MIN</h4>
+            <p>Total minutes played.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>PTS</h4>
+            <p>Points scored.</p>
+            <p>Formula: 1*FTM + 2*(2PM) + 3*(3PM).</p>
+          </div>
+          <div class="glossary-item">
+            <h4>FG / 3PT / FT</h4>
+            <p>Field goals / threes / free throws makes and attempts.</p>
+            <p>Example: FGM and FGA are shown separately.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>FG% / 3PT% / FT%</h4>
+            <p>Percent makes.</p>
+            <p>Formula: makes / attempts * 100.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>OREB / DREB / REB</h4>
+            <p>Offensive, defensive, total rebounds.</p>
+            <p>Formula: REB = OREB + DREB.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>AST / STL / BLK / TO / PF</h4>
+            <p>Assists, steals, blocks, turnovers, personal fouls.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>POT AST</h4>
+            <p>Potential assists recorded after missed shots.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>BLK AG</h4>
+            <p>Shots blocked against the player.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>FOULS DRAWN</h4>
+            <p>Fouls called on opponents by the player.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>FG %AST</h4>
+            <p>Percent of a player's made FGs that were assisted.</p>
+            <p>Formula: assisted FGM / FGM * 100.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>eFG%</h4>
+            <p>Effective FG% (credits 3s).</p>
+            <p>Formula: (FGM + 0.5*3PM) / FGA.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>TS%</h4>
+            <p>True Shooting % (overall scoring efficiency).</p>
+            <p>Formula: PTS / (2*FGA + 0.44*FTA).</p>
+          </div>
+          <div class="glossary-item">
+            <h4>USG%</h4>
+            <p>Usage % (share of team plays used while on floor).</p>
+            <p>Formula: 100 * ((FGA + 0.44*FTA + TOV) * (Tm MP/5)) / (MP * (Tm FGA + 0.44*Tm FTA + Tm TOV)).</p>
+          </div>
+          <div class="glossary-item">
+            <h4>GMSC</h4>
+            <p>Game Score (overall game impact).</p>
+            <p>Formula: PTS + 0.4*FGM - 0.7*FGA - 0.4*(FTA - FTM) + 0.7*ORB + 0.3*DRB + STL + 0.7*AST + 0.7*BLK - 0.4*PF - TOV.</p>
+          </div>
+          <div class="glossary-item">
+            <h4>AST%</h4>
+            <p>Assist percentage.</p>
+            <p>Formula: 100 * AST / (((MP / (Tm MP/5)) * Tm FGM) - FGM).</p>
+          </div>
+          <div class="glossary-item">
+            <h4>GP</h4>
+            <p>Games played (minutes &gt; 0).</p>
+          </div>
+        </div>
+      </details>
+    `;
+
     function renderAll() {
       const games = getSortedGames();
       const shotChartOptions = buildGameOptions(games, true);
       const teamBoxOptions = buildGameOptions(games, false);
+
+      const nerdFilter = document.querySelector('[data-role="nerd-filter"]');
+      if (nerdFilter) {
+        const nerdOptions = buildNerdOptions(games);
+        const defaultValue = nerdOptions.some(option => option.value === state.nerdSelection)
+          ? state.nerdSelection
+          : nerdOptions[0]?.value;
+        setSelectOptions(nerdFilter, nerdOptions, defaultValue);
+        state.nerdSelection = nerdFilter.value;
+        bindSelectOnce(nerdFilter, () => {
+          state.nerdSelection = nerdFilter.value;
+          renderNerdZone();
+        });
+      }
 
       document.querySelectorAll('[data-role="shot-chart-select"]').forEach(select => {
         setSelectOptions(select, shotChartOptions, 'all');
@@ -1261,6 +1592,7 @@
       renderPlayerAdvancedTables();
       renderTeamTable();
       renderTeamBoxScore();
+      renderNerdZone();
       renderAllShotCharts();
       const teamChart = document.querySelector('[data-role="shot-chart"][data-page="team"]');
       if (teamChart) {
@@ -1357,6 +1689,18 @@
       games.forEach(game => {
         const label = `${game.id} - ${game.date}`;
         options.push({ value: game.key, label });
+      });
+      return options;
+    }
+
+    function buildNerdOptions(games) {
+      const options = [
+        { value: 'all-total', label: 'All Games (Total)' },
+        { value: 'all-per-game', label: 'All Games (Per Game)' }
+      ];
+      games.forEach(game => {
+        const label = `${game.id} - ${game.date}`;
+        options.push({ value: `game:${game.key}`, label });
       });
       return options;
     }
@@ -1571,6 +1915,366 @@
       });
     }
 
+    function buildAssistEdges() {
+      const totals = {};
+      const matrix = {};
+      const rosterNumbers = new Set(roster.map(player => player.number));
+
+      const selection = state.nerdSelection || 'all-total';
+      const games = getSortedGames();
+      let selectedGames = games;
+      let isAverage = false;
+      let factor = 1;
+
+      if (selection.startsWith('game:')) {
+        const key = selection.replace('game:', '');
+        const game = state.games[key];
+        selectedGames = game ? [game] : [];
+      } else if (selection === 'all-per-game') {
+        isAverage = true;
+        const count = games.length || 0;
+        factor = count ? 1 / count : 0;
+      }
+
+      selectedGames.forEach(game => {
+        const pairs = game.assistPairs || {};
+        Object.keys(pairs).forEach(from => {
+          const fromNumber = Number.parseInt(from, 10);
+          if (!rosterNumbers.has(fromNumber)) {
+            return;
+          }
+          const targets = pairs[from] || {};
+          Object.keys(targets).forEach(to => {
+            const toNumber = Number.parseInt(to, 10);
+            if (!rosterNumbers.has(toNumber)) {
+              return;
+            }
+            if (fromNumber === toNumber) {
+              return;
+            }
+            const count = targets[to] || 0;
+            if (!count) {
+              return;
+            }
+            const key = `${fromNumber}-${toNumber}`;
+            totals[key] = (totals[key] || 0) + count;
+            if (!matrix[fromNumber]) {
+              matrix[fromNumber] = {};
+            }
+            matrix[fromNumber][toNumber] = (matrix[fromNumber][toNumber] || 0) + count;
+          });
+        });
+      });
+
+      if (isAverage && factor > 0) {
+        Object.keys(totals).forEach(key => {
+          totals[key] *= factor;
+        });
+        Object.keys(matrix).forEach(from => {
+          Object.keys(matrix[from]).forEach(to => {
+            matrix[from][to] *= factor;
+          });
+        });
+      }
+
+      const edges = [];
+      let min = Infinity;
+      let max = 0;
+
+      Object.entries(totals).forEach(([key, count]) => {
+        if (!count) {
+          return;
+        }
+        const [from, to] = key.split('-').map(value => Number.parseInt(value, 10));
+        if (!Number.isFinite(from) || !Number.isFinite(to)) {
+          return;
+        }
+        min = Math.min(min, count);
+        max = Math.max(max, count);
+        edges.push({ from, to, count });
+      });
+
+      state.nerdMatrix = matrix;
+      state.nerdIsAverage = isAverage;
+
+      if (!edges.length) {
+        return { edges: [] };
+      }
+
+      const minWidth = 1.5;
+      const maxWidth = minWidth * 4;
+      const minAlpha = 0.25;
+      const maxAlpha = 0.95;
+      const spread = max > min ? max - min : 1;
+
+      edges.forEach(edge => {
+        const t = max > min ? (edge.count - min) / spread : 1;
+        edge.width = minWidth + t * (maxWidth - minWidth);
+        edge.alpha = minAlpha + t * (maxAlpha - minAlpha);
+      });
+
+      return { edges };
+    }
+
+    function renderNerdZone() {
+      const svg = document.querySelector('[data-role="nerdzone-svg"]');
+      if (!svg) {
+        return;
+      }
+      const empty = document.querySelector('[data-role="nerdzone-empty"]');
+
+      svg.innerHTML = '';
+      state.nerdHover = null;
+
+      const { edges } = buildAssistEdges();
+      if (empty) {
+        empty.classList.toggle('hidden', edges.length > 0);
+      }
+
+      const svgWidth = 600;
+      const svgHeight = 320;
+      const center = { x: svgWidth / 2, y: svgHeight / 2 };
+      const radius = Math.max(100, Math.min(center.x - 80, center.y - 40));
+      const positions = {};
+      const totalPlayers = roster.length || 1;
+
+      roster.forEach((player, index) => {
+        const angle = (Math.PI * 2 * index) / totalPlayers - Math.PI / 2;
+        positions[player.number] = {
+          x: center.x + radius * Math.cos(angle),
+          y: center.y + radius * Math.sin(angle)
+        };
+      });
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const nodeRadius = 16;
+
+      const defs = document.createElementNS(svgNS, 'defs');
+      const greenMarker = document.createElementNS(svgNS, 'marker');
+      greenMarker.setAttribute('id', 'nerd-arrow-green');
+      greenMarker.setAttribute('markerWidth', '8');
+      greenMarker.setAttribute('markerHeight', '8');
+      greenMarker.setAttribute('refX', '6');
+      greenMarker.setAttribute('refY', '3');
+      greenMarker.setAttribute('orient', 'auto');
+      greenMarker.setAttribute('markerUnits', 'strokeWidth');
+      const greenArrow = document.createElementNS(svgNS, 'path');
+      greenArrow.setAttribute('d', 'M0,0 L6,3 L0,6 Z');
+      greenArrow.setAttribute('fill', '#16a34a');
+      greenMarker.appendChild(greenArrow);
+      defs.appendChild(greenMarker);
+
+      const redMarker = document.createElementNS(svgNS, 'marker');
+      redMarker.setAttribute('id', 'nerd-arrow-blue');
+      redMarker.setAttribute('markerWidth', '8');
+      redMarker.setAttribute('markerHeight', '8');
+      redMarker.setAttribute('refX', '6');
+      redMarker.setAttribute('refY', '3');
+      redMarker.setAttribute('orient', 'auto');
+      redMarker.setAttribute('markerUnits', 'strokeWidth');
+      const redArrow = document.createElementNS(svgNS, 'path');
+      redArrow.setAttribute('d', 'M0,0 L6,3 L0,6 Z');
+      redArrow.setAttribute('fill', '#2563eb');
+      redMarker.appendChild(redArrow);
+      defs.appendChild(redMarker);
+
+      svg.appendChild(defs);
+
+      const pairMap = new Map();
+      edges.forEach(edge => {
+        const key = edge.from < edge.to ? `${edge.from}-${edge.to}` : `${edge.to}-${edge.from}`;
+        const entry = pairMap.get(key) || { a: null, b: null };
+        if (edge.from < edge.to) {
+          entry.a = edge;
+        } else {
+          entry.b = edge;
+        }
+        pairMap.set(key, entry);
+      });
+
+      pairMap.forEach((pair, key) => {
+        const [leftKey, rightKey] = key.split('-').map(value => Number.parseInt(value, 10));
+        const leftPos = positions[leftKey];
+        const rightPos = positions[rightKey];
+        if (!leftPos || !rightPos) {
+          return;
+        }
+
+        const dx = rightPos.x - leftPos.x;
+        const dy = rightPos.y - leftPos.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const unitX = dx / len;
+        const unitY = dy / len;
+        const perpX = -unitY;
+        const perpY = unitX;
+
+        const leftOffsetX = unitX * nodeRadius;
+        const leftOffsetY = unitY * nodeRadius;
+
+        const greenEdge = pair.a;
+        const redEdge = pair.b;
+        const greenWidth = greenEdge ? greenEdge.width : 0;
+        const redWidth = redEdge ? redEdge.width : 0;
+        const offsetDistance = greenWidth && redWidth ? ((greenWidth + redWidth) * 0.25 + 0.5) : 0;
+
+        if (greenEdge) {
+          const line = document.createElementNS(svgNS, 'line');
+          line.classList.add('nerd-edge');
+          line.setAttribute('x1', leftPos.x + leftOffsetX + perpX * offsetDistance);
+          line.setAttribute('y1', leftPos.y + leftOffsetY + perpY * offsetDistance);
+          line.setAttribute('x2', rightPos.x - leftOffsetX + perpX * offsetDistance);
+          line.setAttribute('y2', rightPos.y - leftOffsetY + perpY * offsetDistance);
+          line.dataset.from = String(greenEdge.from);
+          line.dataset.to = String(greenEdge.to);
+          line.dataset.count = String(greenEdge.count);
+          line.dataset.alpha = greenEdge.alpha.toFixed(2);
+          line.dataset.color = 'green';
+          line.style.stroke = '#16a34a';
+          line.style.strokeWidth = greenEdge.width.toFixed(2);
+          line.style.opacity = greenEdge.alpha.toFixed(2);
+          line.setAttribute('marker-end', 'url(#nerd-arrow-green)');
+          svg.appendChild(line);
+        }
+
+        if (redEdge) {
+          const line = document.createElementNS(svgNS, 'line');
+          line.classList.add('nerd-edge');
+          line.setAttribute('x1', rightPos.x - leftOffsetX - perpX * offsetDistance);
+          line.setAttribute('y1', rightPos.y - leftOffsetY - perpY * offsetDistance);
+          line.setAttribute('x2', leftPos.x + leftOffsetX - perpX * offsetDistance);
+          line.setAttribute('y2', leftPos.y + leftOffsetY - perpY * offsetDistance);
+          line.dataset.from = String(redEdge.from);
+          line.dataset.to = String(redEdge.to);
+          line.dataset.count = String(redEdge.count);
+          line.dataset.alpha = redEdge.alpha.toFixed(2);
+          line.dataset.color = 'blue';
+          line.style.stroke = '#2563eb';
+          line.style.strokeWidth = redEdge.width.toFixed(2);
+          line.style.opacity = redEdge.alpha.toFixed(2);
+          line.setAttribute('marker-end', 'url(#nerd-arrow-blue)');
+          svg.appendChild(line);
+        }
+      });
+
+      roster.forEach(player => {
+        const pos = positions[player.number];
+        if (!pos) {
+          return;
+        }
+        const group = document.createElementNS(svgNS, 'g');
+        group.classList.add('nerd-node');
+        group.dataset.player = String(player.number);
+        group.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+
+        const circle = document.createElementNS(svgNS, 'circle');
+        circle.setAttribute('r', String(nodeRadius));
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '0');
+
+        const text = document.createElementNS(svgNS, 'text');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.textContent = player.name;
+
+        group.appendChild(circle);
+        group.appendChild(text);
+        group.addEventListener('mouseenter', () => {
+          state.nerdHover = player.number;
+          updateNerdEdges(svg);
+        });
+        group.addEventListener('mouseleave', () => {
+          state.nerdHover = null;
+          updateNerdEdges(svg);
+        });
+
+        svg.appendChild(group);
+      });
+
+      updateNerdEdges(svg);
+      renderNerdBreakdown(null);
+    }
+
+    function updateNerdEdges(svg) {
+      if (!svg) {
+        return;
+      }
+      const active = state.nerdHover;
+      const edges = svg.querySelectorAll('.nerd-edge');
+      edges.forEach(edge => {
+        const from = edge.dataset.from;
+        const to = edge.dataset.to;
+        const show = !active || from === String(active) || to === String(active);
+        edge.style.opacity = show ? (edge.dataset.alpha || '1') : '0';
+
+        if (active) {
+          if (from === String(active)) {
+            edge.style.stroke = '#16a34a';
+            edge.setAttribute('marker-end', 'url(#nerd-arrow-green)');
+          } else if (to === String(active)) {
+            edge.style.stroke = '#2563eb';
+            edge.setAttribute('marker-end', 'url(#nerd-arrow-blue)');
+          }
+          return;
+        }
+
+        edge.style.stroke = '#94a3b8';
+        if (edge.dataset.color === 'green') {
+          edge.setAttribute('marker-end', 'url(#nerd-arrow-green)');
+        } else if (edge.dataset.color === 'blue') {
+          edge.setAttribute('marker-end', 'url(#nerd-arrow-blue)');
+        } else {
+          edge.removeAttribute('marker-end');
+        }
+      });
+      const nodes = svg.querySelectorAll('.nerd-node');
+      nodes.forEach(node => {
+        node.classList.toggle('active', active && node.dataset.player === String(active));
+      });
+      renderNerdBreakdown(active);
+    }
+
+    function renderNerdBreakdown(activePlayer) {
+      const title = document.querySelector('[data-role="nerd-breakdown-title"]');
+      const tbody = document.querySelector('[data-role="nerd-breakdown-table"] tbody');
+      if (!title || !tbody) {
+        return;
+      }
+      tbody.innerHTML = '';
+      if (!activePlayer) {
+        title.textContent = 'Hover a player to see assist breakdown';
+        return;
+      }
+
+      const player = roster.find(item => item.number === activePlayer);
+      title.textContent = player ? `${player.name} assist breakdown` : 'Assist breakdown';
+
+      let hasRows = false;
+      roster.forEach(other => {
+        if (other.number === activePlayer) {
+          return;
+        }
+        const given = state.nerdMatrix?.[activePlayer]?.[other.number] || 0;
+        const received = state.nerdMatrix?.[other.number]?.[activePlayer] || 0;
+        if (!given && !received) {
+          return;
+        }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${other.name}</td>
+          <td>${formatNumber(given, state.nerdIsAverage)}</td>
+          <td>${formatNumber(received, state.nerdIsAverage)}</td>
+        `;
+        tbody.appendChild(row);
+        hasRows = true;
+      });
+
+      if (!hasRows) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3">No assists recorded.</td>';
+        tbody.appendChild(row);
+      }
+    }
+
     function renderAllShotCharts() {
       document.querySelectorAll('[data-role="shot-chart-select"]').forEach(select => {
         const pageKey = select.dataset.page;
@@ -1643,7 +2347,8 @@
         row.innerHTML = `
           <td>${player.number}</td>
           <td>${player.name}</td>
-          <td>${formatShotValue(makes, isAverageMode)}-${formatShotValue(attempts, isAverageMode)}</td>
+          <td>${formatShotValue(makes, isAverageMode)}</td>
+          <td>${formatShotValue(attempts, isAverageMode)}</td>
           <td>${pct}</td>
         `;
         tbody.appendChild(row);
@@ -1653,7 +2358,7 @@
       if (!hasRows) {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td colspan="4">No attempts recorded.</td>
+          <td colspan="5">No attempts recorded.</td>
         `;
         tbody.appendChild(row);
       }
@@ -1780,11 +2485,14 @@
       return `
         <td>${formatDuration(minutes)}</td>
         <td>${formatNumber(points, isAverage)}</td>
-        <td>${formatMakeAttempts(fgMakes, fgAttempts, isAverage)}</td>
+        <td>${formatNumber(fgMakes, isAverage)}</td>
+        <td>${formatNumber(fgAttempts, isAverage)}</td>
         <td>${formatPercentValue(fgMakes, fgAttempts)}</td>
-        <td>${formatMakeAttempts(threeMakes, threeAttempts, isAverage)}</td>
+        <td>${formatNumber(threeMakes, isAverage)}</td>
+        <td>${formatNumber(threeAttempts, isAverage)}</td>
         <td>${formatPercentValue(threeMakes, threeAttempts)}</td>
-        <td>${formatMakeAttempts(ftMakes, ftAttempts, isAverage)}</td>
+        <td>${formatNumber(ftMakes, isAverage)}</td>
+        <td>${formatNumber(ftAttempts, isAverage)}</td>
         <td>${formatPercentValue(ftMakes, ftAttempts)}</td>
         <td>${formatNumber(offReb, isAverage)}</td>
         <td>${formatNumber(defReb, isAverage)}</td>
