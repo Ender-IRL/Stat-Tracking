@@ -1199,14 +1199,14 @@
 
     const advancedHeaderHtml = `
       <th>POT AST</th>
+      <th>AST%</th>
       <th>BLK AG</th>
       <th>FOULS DRAWN</th>
-      <th>FG AST%</th>
-      <th>eFG%</th>
+      <th>FG %AST</th>
       <th>TS%</th>
-      <th>GMSC</th>
-      <th>AST%</th>
+      <th>eFG%</th>
       <th>USG%</th>
+      <th>GMSC</th>
     `;
 
     function renderAll() {
@@ -1865,14 +1865,14 @@
 
       return `
         <td>${formatNumber(potAst, isAverage)}</td>
+        <td>${formatRate(astPct, true)}</td>
         <td>${formatNumber(blkAgainst, isAverage)}</td>
         <td>${formatNumber(foulDrawn, isAverage)}</td>
         <td>${formatRate(fgAstPct, true)}</td>
-        <td>${formatRate(efg)}</td>
         <td>${formatRate(ts)}</td>
-        <td>${formatNumber(gmsc, true)}</td>
-        <td>${formatRate(astPct, true)}</td>
+        <td>${formatRate(efg)}</td>
         <td>${formatRate(usgPct, true)}</td>
+        <td>${formatNumber(gmsc, true)}</td>
       `;
     }
 
